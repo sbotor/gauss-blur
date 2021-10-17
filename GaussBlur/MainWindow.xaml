@@ -6,7 +6,91 @@
         xmlns:local="clr-namespace:GaussBlur"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
+    <Grid Margin="10">
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="Auto"/>
+        </Grid.ColumnDefinitions>
+
+        <StackPanel Grid.Column="0">
+
+            <Grid  Margin="0 0 0 10">
+
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Row="0">Input</Label>
+                <Label Grid.Row="1">Output</Label>
+
+                <TextBox x:Name="InpFilenameBox" Grid.Column="1" MinWidth="200"/>
+                <TextBox x:Name="OutpFilenameBox" Grid.Row="1" Grid.Column="1" MinWidth="20"/>
+
+                <Button x:Name="BrowseInpFile" Content="Browse" Grid.Row="0" Grid.Column="2" Width="Auto"/>
+                <Button x:Name="BrowseOutpFile" Content="Browse" Grid.Row="1" Grid.Column="2" Width="Auto"/>
+
+            </Grid>
+
+            <WrapPanel Orientation="Horizontal">
+                <Label Content="Library to use:" Margin="0 0 30 0"/>
+                <RadioButton x:Name="UseCS" Content="C# Library" GroupName="LibraryGroup" Margin="0 0 30 0" VerticalAlignment="Center"/>
+                <RadioButton x:Name="UseAsm" Content="Asm Library" GroupName="LibraryGroup" VerticalAlignment="Center"/>
+            </WrapPanel>
+
+            <Grid>
+
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <Label Content="Threads"/>
+                <Slider x:Name="ThreadNumberSlider" Grid.Column="1" Width="100" VerticalAlignment="Center"/>
+                <TextBox x:Name="ThreadNumberBox" Grid.Column="2" MinWidth="30"/>
+
+                <Label Content="Kernel size" Grid.Row="1" Grid.ColumnSpan="2"/>
+                <TextBox x:Name="KernelSizeBox" Grid.Row="1" Grid.Column="2" MinWidth="30"/>
+                
+                <Label Content="Standard deviation" Grid.Row="2" Grid.ColumnSpan="2"/>
+                <TextBox x:Name="SDBox" Grid.Row="2" Grid.Column="2" MinWidth="30"/>
+
+            </Grid>
+
+            <Button x:Name="BlurButton" Content="Blur" Height="30" Width="Auto" Margin="40"/>
+
+        </StackPanel>
+
+        <Grid Grid.Column="1">
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <Label Content="Input file" Grid.Row="0"/>
+            <Image x:Name="InputImagePreview" Grid.Row="1" MinWidth="100" MaxWidth="400" MinHeight="100" MaxHeight="400" Stretch="Uniform" Source="https://www-arch.polsl.pl/logo/PublishingImages/Politechnika_Sl_logo_pl/pl/czarnobiale/politechnika_sl_logo_bw_poziom_pl_rgb.jpg"/>
+
+            <Label Content="Output file" Grid.Row="2"/>
+            <Image x:Name="OutputImagePreview" Grid.Row="3" MinWidth="100" MaxWidth="400" MinHeight="100" MaxHeight="400" Stretch="Uniform" Source="https://www-arch.polsl.pl/Jednostki/RN2-BBN/PublishingImages/politechnika_sl_logo_pion_inwersja_pl_rgb.png"/>
+
+        </Grid>
 
     </Grid>
 </Window>
