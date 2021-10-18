@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GaussBlur"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="GuassBlur" Height="Auto" Width="Auto">
     <Grid Margin="10">
 
         <Grid.ColumnDefinitions>
@@ -72,6 +72,9 @@
             </Grid>
 
             <Button x:Name="BlurButton" Content="Blur" Height="30" Width="Auto" Margin="40"/>
+
+            <Button x:Name="TestButton" Content="Test" Click="TestButton_Click" Width="Auto"/>
+            <Label x:Name="TestLabel" Content="Test"/>
 
         </StackPanel>
 

@@ -24,5 +24,10 @@ namespace GaussBlur
         {
             InitializeComponent();
         }
+
+        private void TestButton_Click(object sender, RoutedEventArgs e)
+        {
+            TestLabel.Content = AsmTest.sanityTest();
+        }
     }
 }
