@@ -20,6 +20,8 @@ namespace GaussBlur
     /// </summary>
     public partial class MainWindow : Window
     {
+        private bool firstClick = true;
+        
         public MainWindow()
         {
             InitializeComponent();
@@ -27,7 +29,26 @@ namespace GaussBlur
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
-            TestLabel.Content = AsmTest.sanityTest();
+            if (firstClick)
+            {
+                TestLabel.Content = AsmTest.sanityTest();
+                firstClick = false;
+            }
+            else
+            {
+                //float[] first = new float[4] { 1, 2, 3, 4 },
+                //    second = new float[4] { 2, 2, 2, 2 },
+                //    result = AsmTest.TestSIMDS(first, second);
+
+                //TestLabel.Content = $"{result[0]}, {result[1]}, {result[2]}, {result[3]}";
+
+                float[] first = new float[4] { 1, 2, 3, 4 },
+                    second = new float[4] { 2, 2, 2, 2 };
+
+                AsmTest.TestSIMDInPlaceS(first, second);
+
+                TestLabel.Content = $"{second[0]}, {second[1]}, {second[2]}, {second[3]}";
+            }
         }
     }
 }

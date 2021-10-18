@@ -1,25 +1,30 @@
 .CODE
 
 sanityTest PROC
-.DATA
-testChar DB 'A'
-
-.CODE
-XOR RAX, RAX
-MOV AL, testChar
-ret
-
+	.DATA
+	testChar DB 'A'
+	.CODE
+	XOR RAX, RAX
+	MOV AL, testChar
+	ret
 sanityTest ENDP
 
-;;;
-
 testSIMD PROC
-
-MOVUPS XMM0, [RCX]
-MULPS XMM0, [RDX]
-MOVUPS [R8], XMM0
-ret
-
+	MOVUPS XMM0, [RCX]
+	;MULPS XMM0, [RDX]
+	MOVUPS XMM1, [RDX]
+	MULPS XMM0, XMM1
+	MOVUPS [R8], XMM0
+	ret
 testSIMD ENDP
+
+testSIMDInPlace PROC
+	MOVUPS XMM0, [RCX]
+	;MULPS XMM0, [RDX]
+	MOVUPS XMM1, [RDX]
+	MULPS XMM0, XMM1
+	MOVUPS [RDX], XMM0
+	ret
+testSIMDInPlace ENDP
 
 END

@@ -13,9 +13,12 @@ namespace GaussBlur
         private static extern void testSIMD(float* first, float* second, float* result);
 
         [DllImport(dllDir)]
+        private static extern void testSIMDInPlace(float* first, float* second);
+
+        [DllImport(dllDir)]
         public static extern char sanityTest();
 
-        public float[] TestSIMDSafe(float[] first, float[] second)
+        public static float[] TestSIMDS(float[] first, float[] second)
         {
             float[] result = new float[4];
 
@@ -25,6 +28,14 @@ namespace GaussBlur
             }
 
             return result;
+        }
+
+        public static void TestSIMDInPlaceS(float[] first, float[] second)
+        {
+            fixed (float* firstP = first, secondP = second)
+            {
+                testSIMDInPlace(firstP, secondP);
+            }
         }
     }
 }
