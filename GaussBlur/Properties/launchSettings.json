@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "GaussBlur": {
-      "commandName": "Project",
-      "nativeDebugging": true
-    }
-  }
-}

@@ -1,4 +1,6 @@
-﻿using System;
+﻿#define CTEST
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,6 +23,7 @@ namespace GaussBlur
     public partial class MainWindow : Window
     {
         private bool firstClick = true;
+        private int counter = 0;
         
         public MainWindow()
         {
@@ -29,6 +32,7 @@ namespace GaussBlur
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
         {
+#if ASMTEST
             if (firstClick)
             {
                 TestLabel.Content = AsmTest.sanityTest();
@@ -49,6 +53,10 @@ namespace GaussBlur
 
                 TestLabel.Content = $"{second[0]}, {second[1]}, {second[2]}, {second[3]}";
             }
+#elif CTEST
+            //int first = 1, second = 3;
+            TestLabel.Content = CTest.addTest(counter++, 1);
+#endif
         }
     }
 }
