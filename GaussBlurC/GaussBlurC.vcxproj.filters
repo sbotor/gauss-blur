@@ -22,7 +22,7 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GaussBlurC.h">
-      <Filter>Source Files</Filter>
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -32,7 +32,7 @@
     <ClCompile Include="pch.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="GaussBlurC.C">
+    <ClCompile Include="GaussBlurC.c">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

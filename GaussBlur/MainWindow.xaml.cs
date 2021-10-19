@@ -14,6 +14,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.IO;
+using System.Drawing;
 
 namespace GaussBlur
 {
@@ -28,6 +30,7 @@ namespace GaussBlur
         public MainWindow()
         {
             InitializeComponent();
+
         }
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
@@ -57,6 +60,41 @@ namespace GaussBlur
             //int first = 1, second = 3;
             TestLabel.Content = CTest.addTest(counter++, 1);
 #endif
+        }
+
+        private void InpFilenameBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            string inpDir = InpFilenameBox.Text;
+            if (inpDir != null && inpDir != "")
+            {
+                try
+                {
+                    if (File.Exists(inpDir))
+                    {
+                        Uri imageUri = new Uri(inpDir);
+                        BitmapImage image = new BitmapImage(imageUri);
+                        InputImagePreview.Source = image;
+                        OutpFilenameBox.Text = image.UriSource.AbsolutePath;
+
+                        Bitmap bmp = new Bitmap(inpDir);
+                        System.Drawing.Rectangle rect = new System.Drawing.Rectangle(0, 0, bmp.Width, bmp.Height);
+                        System.Drawing.Imaging.BitmapData bmpData =
+                            bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite,
+                            bmp.PixelFormat);
+
+                        RGBArray rgbarr = new RGBArray(bmpData);
+                        rgbarr.SaveB("TestB.txt");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Cannot open file: {inpDir}.");
+                    }
+                }
+                catch (UriFormatException exc)
+                {
+                    Console.WriteLine($"Cannot open file: {exc.Data}.");
+                }
+            }
         }
     }
 }

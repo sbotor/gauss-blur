@@ -31,7 +31,7 @@
                 <Label Grid.Row="0">Input</Label>
                 <Label Grid.Row="1">Output</Label>
 
-                <TextBox x:Name="InpFilenameBox" Grid.Column="1" MinWidth="200"/>
+                <TextBox x:Name="InpFilenameBox" Grid.Column="1" MinWidth="200" LostFocus="InpFilenameBox_LostFocus"/>
                 <TextBox x:Name="OutpFilenameBox" Grid.Row="1" Grid.Column="1" MinWidth="20"/>
 
                 <Button x:Name="BrowseInpFile" Content="Browse" Grid.Row="0" Grid.Column="2" Width="Auto"/>
@@ -41,7 +41,7 @@
 
             <WrapPanel Orientation="Horizontal">
                 <Label Content="Library to use:" Margin="0 0 30 0"/>
-                <RadioButton x:Name="UseCS" Content="C# Library" GroupName="LibraryGroup" Margin="0 0 30 0" VerticalAlignment="Center"/>
+                <RadioButton x:Name="UseC" Content="C Library" GroupName="LibraryGroup" Margin="0 0 30 0" VerticalAlignment="Center"/>
                 <RadioButton x:Name="UseAsm" Content="Asm Library" GroupName="LibraryGroup" VerticalAlignment="Center"/>
             </WrapPanel>
 
