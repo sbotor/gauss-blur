@@ -57,13 +57,29 @@ namespace GaussBlur
             
             return converted;
         }
-
+        
         public void SaveB(string fileDir)
         {
             using (FileStream fs = File.Open(fileDir, FileMode.OpenOrCreate, FileAccess.Write))
             {
                 StreamWriter sw = new StreamWriter(fs);
                 Array.ForEach(data, (n) => sw.WriteLine(n));
+            }
+        }
+
+        public void SaveF(string fileDir)
+        {
+            using (FileStream fs = File.Open(fileDir, FileMode.OpenOrCreate, FileAccess.Write))
+            {
+                StreamWriter sw = new StreamWriter(fs);
+                float[] dataFloat = ToFloat();
+                
+                for (int i = 0; i < dataFloat.Length; i++)
+                {
+                    dataFloat[i] *= (float)1.1;
+                }
+
+                Array.ForEach(dataFloat, (n) => sw.WriteLine(n));
             }
         }
     }
