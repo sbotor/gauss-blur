@@ -7,27 +7,27 @@ using System.IO;
 
 namespace GaussBlur
 {
-    class RGBArray
+    public class RGBArray
     {
-        private byte[] data;
-        public byte[] Data
+        private readonly double[] data;
+        public double[] Data
         {
-            get { return data; }
+            get => data;
         }
 
-        private int width;
+        private readonly int width;
         public int Width
         {
             get => width;
         }
 
-        private int height;
+        private readonly int height;
         public int Height
         {
             get => height;
         }
 
-        private int stride;
+        private readonly int stride;
         public int Stride
         {
             get => stride;
@@ -38,6 +38,12 @@ namespace GaussBlur
             get => data.Length;
         }
 
+        public double this[int key]
+        {
+            get => data[key];
+            set => data[key] = value;
+        }
+
         public RGBArray(System.Drawing.Imaging.BitmapData imageData)
         {
             width = imageData.Width;
@@ -45,42 +51,39 @@ namespace GaussBlur
             stride = imageData.Stride;
 
             int length = Math.Abs(imageData.Stride) * imageData.Height;
-            data = new byte[length];
+            byte[] bytes = new byte[length];
 
-            Marshal.Copy(imageData.Scan0, data, 0, length);
+            Marshal.Copy(imageData.Scan0, bytes, 0, length);
+
+            data = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Select(bytes, Convert.ToDouble));
         }
 
-        public float[] ToFloat()
+        public RGBArray(Bitmap image)
         {
-            float[] converted = new float[Length];
-            Array.Copy(data, converted, Length);
-            
-            return converted;
-        }
-        
-        public void SaveB(string fileDir)
-        {
-            using (FileStream fs = File.Open(fileDir, FileMode.OpenOrCreate, FileAccess.Write))
-            {
-                StreamWriter sw = new StreamWriter(fs);
-                Array.ForEach(data, (n) => sw.WriteLine(n));
-            }
+            Rectangle rect = new Rectangle(0, 0, image.Width, image.Height);
+            System.Drawing.Imaging.BitmapData imageData = image.LockBits(
+                rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, image.PixelFormat);
+
+            width = imageData.Width;
+            height = imageData.Height;
+            stride = imageData.Stride;
+
+            int length = Math.Abs(imageData.Stride) * imageData.Height;
+            byte[] bytes = new byte[length];
+
+            Marshal.Copy(imageData.Scan0, bytes, 0, length);
+
+            data = new double[length];
+            Array.Copy(bytes, data, length);
+
+            image.UnlockBits(imageData);
         }
 
-        public void SaveF(string fileDir)
+        public byte[] ToByteArray()
         {
-            using (FileStream fs = File.Open(fileDir, FileMode.OpenOrCreate, FileAccess.Write))
-            {
-                StreamWriter sw = new StreamWriter(fs);
-                float[] dataFloat = ToFloat();
-                
-                for (int i = 0; i < dataFloat.Length; i++)
-                {
-                    dataFloat[i] *= (float)1.1;
-                }
+            byte[] arr = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Select(data, Convert.ToByte));
 
-                Array.ForEach(dataFloat, (n) => sw.WriteLine(n));
-            }
+            return arr;
         }
     }
 }

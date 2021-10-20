@@ -83,7 +83,6 @@ namespace GaussBlur
                             bmp.PixelFormat);
 
                         RGBArray rgbarr = new RGBArray(bmpData);
-                        rgbarr.SaveF("TestB.txt");
                     }
                     else
                     {
