@@ -90,8 +90,7 @@ namespace GaussBlur
         {
             if (n == 1)
             {
-                // TODO
-                return null;
+                return new int[2] { 0, Length };
             }
             else if (n > 1 && n <= 64)
             {
@@ -118,8 +117,7 @@ namespace GaussBlur
             }
             else
             {
-                // TODO
-                return null;
+                throw new ArgumentOutOfRangeException("To few slices.");
             }
         }
     }

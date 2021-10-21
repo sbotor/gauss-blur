@@ -6,27 +6,32 @@ namespace GaussBlur
 {
     class GaussKernel
     {
-        private double[] data;
         public double[] Data
         {
-            get => data;
+            get;
+            private set;
         }
 
-        private double stdDev;
         public double StdDev
         {
-            get => stdDev;
+            get;
+            private set;
         }
 
         public int Size
         {
-            get => data.Length;
+            get => Data.Length;
         }
 
         public GaussKernel(int kernelSize, double sd)
         {
-            data = new double[kernelSize];
-            stdDev = sd;
+            if (kernelSize < 1 || kernelSize % 2 != 1)
+            {
+                throw new ArgumentException($"Kernel size of {kernelSize} is not valid.");
+            }
+            
+            Data = new double[kernelSize];
+            StdDev = sd;
 
             int maxCenterOffset = (kernelSize - 1) / 2;
             double variance = sd * sd,
@@ -37,13 +42,13 @@ namespace GaussBlur
             {
                 double gaussValue = constance * Math.Exp(-(offset * offset) / (2 * variance));
 
-                data[offset + maxCenterOffset] = gaussValue;
+                Data[offset + maxCenterOffset] = gaussValue;
                 kernelSum += gaussValue;
             }
 
             for (int offset = -maxCenterOffset; offset <= maxCenterOffset; offset++)
             {
-                data[offset + maxCenterOffset] /= kernelSum;
+                Data[offset + maxCenterOffset] /= kernelSum;
             }
         }
     }

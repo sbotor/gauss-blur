@@ -18,6 +18,7 @@ using System.IO;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Diagnostics;
 
 namespace GaussBlur
 {
@@ -26,15 +27,15 @@ namespace GaussBlur
     /// </summary>
     public partial class MainWindow : Window
     {
-        private bool firstClick = true;
-        private int counter = 0;
-
         private string inpFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\kaiki.png";
         //private string inpFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\test.png";
+        //private string inpFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\4k.jpg";
+        
         private string outFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
 
-        private int kernelSize = 256;
+        private int kernelSize = 255;
         private double stdDev = 8;
+        private int threadCount = 12;
 
         public MainWindow()
         {
@@ -43,55 +44,15 @@ namespace GaussBlur
             //InpFilenameBox.Text = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\test.png";
         }
 
-        private void TestButton_Click(object sender, RoutedEventArgs e)
-        {
-#if ASMTEST
-            if (firstClick)
-            {
-                TestLabel.Content = AsmTest.sanityTest();
-                firstClick = false;
-            }
-            else
-            {
-                //float[] first = new float[4] { 1, 2, 3, 4 },
-                //    second = new float[4] { 2, 2, 2, 2 },
-                //    result = AsmTest.TestSIMDS(first, second);
-
-                //TestLabel.Content = $"{result[0]}, {result[1]}, {result[2]}, {result[3]}";
-
-                float[] first = new float[4] { 1, 2, 3, 4 },
-                    second = new float[4] { 2, 2, 2, 2 };
-
-                AsmTest.TestSIMDInPlaceS(first, second);
-
-                TestLabel.Content = $"{second[0]}, {second[1]}, {second[2]}, {second[3]}";
-            }
-
-        }
-#endif
-        //private void testCLib(RGBArray rgbArr)
-        //{
-        //    double[] helperArray = new double[rgbArr.Length];
-        //    GaussKernel kernel = new GaussKernel(kernelSize, stdDev);
-            
-        //    unsafe
-        //    {
-        //        fixed (double* rgbArrP = rgbArr.Data,
-        //            helperArrayP = helperArray,
-        //            kernelP = kernel.Data)
-        //        {
-                    
-        //        }
-        //    }
-        //}
-
         private void testCLibThreads(RGBArray rgbArr, int n)
         {
             int[] slices = rgbArr.Slice(n);
             double[] helperArray = new double[rgbArr.Length];
             Thread[] threads = new Thread[n];
             GaussKernel kernel = new GaussKernel(kernelSize, stdDev);
-            ImgProcThread.ThreadCount = n;
+
+            Stopwatch sw = new Stopwatch();
+            sw.Start();
 
             unsafe
             {
@@ -99,17 +60,18 @@ namespace GaussBlur
                     helperArrayP = helperArray,
                     kernelP = kernel.Data)
                 {
+                    BlurThreadFactory blurFact = new CBlurThreadFactory(
+                        rgbArrP,
+                        helperArrayP,
+                        rgbArr.Stride,
+                        rgbArr.Height,
+                        kernelP,
+                        kernelSize,
+                        n);
+                    
                     for (int i = 0; i < n; i++)
                     {
-                        ImgProcThread param = new ImgProcThread(
-                            rgbArrP,
-                            helperArrayP,
-                            slices[i],
-                            slices[i + 1],
-                            rgbArr.Stride,
-                            rgbArr.Height,
-                            kernelP,
-                            kernel.Size);
+                        IBlurThread param = (CBlurThread)blurFact.CreateThread(slices[i], slices[i + 1]);
                         
                         threads[i] = new Thread(new ThreadStart(param.Run));
                         threads[i].Start();
@@ -118,6 +80,9 @@ namespace GaussBlur
                     {
                         threads[i].Join();
                     }
+
+                    sw.Stop();
+                    MessageBox.Show($"Finished in {sw.Elapsed.TotalMilliseconds / 1000} s.");
                 }
             }
         }
@@ -134,7 +99,7 @@ namespace GaussBlur
                         Uri imageUri = new Uri(inpDir);
                         BitmapImage image = new BitmapImage(imageUri);
                         InputImagePreview.Source = image;
-                        OutpFilenameBox.Text = image.UriSource.AbsolutePath;
+                        OutFilenameBox.Text = outFile;
                     }
                     else
                     {
@@ -167,7 +132,7 @@ namespace GaussBlur
                         int[] slices = rgbArr.Slice(4);
                         //testCLib(rgbArr);
                         //testCLibParam(rgbArr, 4);
-                        testCLibThreads(rgbArr, 64);
+                        testCLibThreads(rgbArr, threadCount);
 
                         Marshal.Copy(rgbArr.ToByteArray(), 0, imageData.Scan0, rgbArr.Length);
                         image.UnlockBits(imageData);

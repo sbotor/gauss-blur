@@ -147,17 +147,17 @@ void blurY(double* src, double* dest, int start, int end, int imageStride, int i
 	}
 }
 
-void destroyKernel(struct kernelStruct* kernelP) {
-	if (kernelP != NULL) {
-		if (kernelP->data != NULL) {
-			free(kernelP->data);
-			kernelP->data = NULL;
-		}
-
-		free(kernelP);
-		kernelP = NULL;
-	}
-}
+//void destroyKernel(struct kernelStruct* kernelP) {
+//	if (kernelP != NULL) {
+//		if (kernelP->data != NULL) {
+//			free(kernelP->data);
+//			kernelP->data = NULL;
+//		}
+//
+//		free(kernelP);
+//		kernelP = NULL;
+//	}
+//}
 
 //void blur(double* src, int start, int end, int imageStride, int imageHeight, int kernelSize, double stdDev) {
 //		struct kernelStruct* kernelP = createKernel(kernelSize, stdDev);

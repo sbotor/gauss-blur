@@ -32,10 +32,10 @@
                 <Label Grid.Row="1">Output</Label>
 
                 <TextBox x:Name="InpFilenameBox" Grid.Column="1" MinWidth="200" LostFocus="InpFilenameBox_LostFocus"/>
-                <TextBox x:Name="OutpFilenameBox" Grid.Row="1" Grid.Column="1" MinWidth="20"/>
+                <TextBox x:Name="OutFilenameBox" Grid.Row="1" Grid.Column="1" MinWidth="20"/>
 
                 <Button x:Name="BrowseInpFile" Content="Browse" Grid.Row="0" Grid.Column="2" Width="Auto"/>
-                <Button x:Name="BrowseOutpFile" Content="Browse" Grid.Row="1" Grid.Column="2" Width="Auto"/>
+                <Button x:Name="BrowseOutFile" Content="Browse" Grid.Row="1" Grid.Column="2" Width="Auto"/>
 
             </Grid>
 
@@ -56,25 +56,20 @@
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
                 <Label Content="Threads"/>
-                <Slider x:Name="ThreadNumberSlider" Grid.Column="1" Width="100" VerticalAlignment="Center"/>
                 <TextBox x:Name="ThreadNumberBox" Grid.Column="2" MinWidth="30"/>
 
-                <Label Content="Kernel size" Grid.Row="1" Grid.ColumnSpan="2"/>
+                <Label Content="Kernel size" Grid.Row="1"/>
                 <TextBox x:Name="KernelSizeBox" Grid.Row="1" Grid.Column="2" MinWidth="30"/>
                 
-                <Label Content="Standard deviation" Grid.Row="2" Grid.ColumnSpan="2"/>
+                <Label Content="Standard deviation" Grid.Row="2"/>
                 <TextBox x:Name="SDBox" Grid.Row="2" Grid.Column="2" MinWidth="30"/>
 
             </Grid>
 
             <Button x:Name="BlurButton" Content="Blur" Click="BlurButton_Click" Height="30" Width="Auto" Margin="40"/>
-
-            <Button x:Name="TestButton" Content="Test" Click="TestButton_Click" Width="Auto"/>
-            <Label x:Name="TestLabel" Content="Test"/>
 
         </StackPanel>
 
