@@ -17,6 +17,7 @@ using System.Windows.Shapes;
 using System.IO;
 using System.Drawing;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace GaussBlur
 {
@@ -27,11 +28,19 @@ namespace GaussBlur
     {
         private bool firstClick = true;
         private int counter = 0;
-        
+
+        private string inpFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\kaiki.png";
+        //private string inpFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\test.png";
+        private string outFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
+
+        private int kernelSize = 256;
+        private double stdDev = 8;
+
         public MainWindow()
         {
             InitializeComponent();
-            InpFilenameBox.Text = @"D:\repos\img-processing\kaiki31.png";
+            InpFilenameBox.Text = inpFile;
+            //InpFilenameBox.Text = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\test.png";
         }
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
@@ -57,26 +66,58 @@ namespace GaussBlur
 
                 TestLabel.Content = $"{second[0]}, {second[1]}, {second[2]}, {second[3]}";
             }
-#elif CTEST
-            //int first = 1, second = 3;
-            TestLabel.Content = CTest.addTest(counter++, 1);
-#endif
-        }
 
-        private void testCLib(RGBArray rgbArr)
+        }
+#endif
+        //private void testCLib(RGBArray rgbArr)
+        //{
+        //    double[] helperArray = new double[rgbArr.Length];
+        //    GaussKernel kernel = new GaussKernel(kernelSize, stdDev);
+            
+        //    unsafe
+        //    {
+        //        fixed (double* rgbArrP = rgbArr.Data,
+        //            helperArrayP = helperArray,
+        //            kernelP = kernel.Data)
+        //        {
+                    
+        //        }
+        //    }
+        //}
+
+        private void testCLibThreads(RGBArray rgbArr, int n)
         {
+            int[] slices = rgbArr.Slice(n);
+            double[] helperArray = new double[rgbArr.Length];
+            Thread[] threads = new Thread[n];
+            GaussKernel kernel = new GaussKernel(kernelSize, stdDev);
+            ImgProcThread.ThreadCount = n;
+
             unsafe
             {
-                fixed (double* rgbArrP = rgbArr.Data)
+                fixed (double* rgbArrP = rgbArr.Data,
+                    helperArrayP = helperArray,
+                    kernelP = kernel.Data)
                 {
-                    CTest.blur(
-                        rgbArrP,
-                        0,
-                        rgbArr.Length,
-                        rgbArr.Stride,
-                        rgbArr.Height,
-                        32,
-                        4);
+                    for (int i = 0; i < n; i++)
+                    {
+                        ImgProcThread param = new ImgProcThread(
+                            rgbArrP,
+                            helperArrayP,
+                            slices[i],
+                            slices[i + 1],
+                            rgbArr.Stride,
+                            rgbArr.Height,
+                            kernelP,
+                            kernel.Size);
+                        
+                        threads[i] = new Thread(new ThreadStart(param.Run));
+                        threads[i].Start();
+                    }
+                    for (int i = 0; i < n; i++)
+                    {
+                        threads[i].Join();
+                    }
                 }
             }
         }
@@ -123,12 +164,19 @@ namespace GaussBlur
                             image.PixelFormat);
 
                         RGBArray rgbArr = new RGBArray(imageData);
-                        testCLib(rgbArr);
+                        int[] slices = rgbArr.Slice(4);
+                        //testCLib(rgbArr);
+                        //testCLibParam(rgbArr, 4);
+                        testCLibThreads(rgbArr, 64);
 
                         Marshal.Copy(rgbArr.ToByteArray(), 0, imageData.Scan0, rgbArr.Length);
                         image.UnlockBits(imageData);
 
-                        image.Save("blurred.png");
+                        image.Save(outFile);
+
+                        Uri imageUri = new Uri(outFile);
+                        BitmapImage imgPrev = new BitmapImage(imageUri);
+                        OutputImagePreview.Source = imgPrev;
                     }
                     else
                     {

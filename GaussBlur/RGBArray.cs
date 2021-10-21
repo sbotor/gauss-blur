@@ -85,5 +85,42 @@ namespace GaussBlur
 
             return arr;
         }
+
+        public int[] Slice(int n)
+        {
+            if (n == 1)
+            {
+                // TODO
+                return null;
+            }
+            else if (n > 1 && n <= 64)
+            {
+                int fill = Width % 4,
+                    rightIntervalEndp = 0,
+                    chunkSize = (Width * Height) / n,
+                    remainder = (Width * Height) % n;
+                int[] indexes = new int[n + 1];
+                indexes[0] = 0;
+
+                for (int i = 1; i <= n; i++)
+                {
+                    rightIntervalEndp += chunkSize;
+                    if (remainder > 0)
+                    {
+                        rightIntervalEndp++;
+                        remainder--;
+                    }
+
+                    indexes[i] = rightIntervalEndp * 3 + (rightIntervalEndp / Width) * fill;
+                }
+
+                return indexes;
+            }
+            else
+            {
+                // TODO
+                return null;
+            }
+        }
     }
 }
