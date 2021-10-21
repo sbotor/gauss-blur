@@ -10,4 +10,8 @@
 // add headers that you want to pre-compile here
 #include "framework.h"
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <math.h>
+
 #endif //PCH_H

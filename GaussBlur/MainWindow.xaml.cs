@@ -16,6 +16,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.IO;
 using System.Drawing;
+using System.Runtime.InteropServices;
 
 namespace GaussBlur
 {
@@ -30,7 +31,7 @@ namespace GaussBlur
         public MainWindow()
         {
             InitializeComponent();
-
+            InpFilenameBox.Text = @"D:\repos\img-processing\kaiki31.png";
         }
 
         private void TestButton_Click(object sender, RoutedEventArgs e)
@@ -62,6 +63,24 @@ namespace GaussBlur
 #endif
         }
 
+        private void testCLib(RGBArray rgbArr)
+        {
+            unsafe
+            {
+                fixed (double* rgbArrP = rgbArr.Data)
+                {
+                    CTest.blur(
+                        rgbArrP,
+                        0,
+                        rgbArr.Length,
+                        rgbArr.Stride,
+                        rgbArr.Height,
+                        32,
+                        4);
+                }
+            }
+        }
+        
         private void InpFilenameBox_LostFocus(object sender, RoutedEventArgs e)
         {
             string inpDir = InpFilenameBox.Text;
@@ -75,14 +94,41 @@ namespace GaussBlur
                         BitmapImage image = new BitmapImage(imageUri);
                         InputImagePreview.Source = image;
                         OutpFilenameBox.Text = image.UriSource.AbsolutePath;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Cannot open file: {inpDir}.");
+                    }
+                }
+                catch (UriFormatException exc)
+                {
+                    Console.WriteLine($"Cannot open file: {exc.Data}.");
+                }
+            }
+        }
 
-                        Bitmap bmp = new Bitmap(inpDir);
-                        System.Drawing.Rectangle rect = new System.Drawing.Rectangle(0, 0, bmp.Width, bmp.Height);
-                        System.Drawing.Imaging.BitmapData bmpData =
-                            bmp.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite,
-                            bmp.PixelFormat);
+        private void BlurButton_Click(object sender, RoutedEventArgs e)
+        {
+            string inpDir = InpFilenameBox.Text;
+            if (inpDir != null && inpDir != "")
+            {
+                try
+                {
+                    if (File.Exists(inpDir))
+                    {
+                        Bitmap image = new Bitmap(inpDir);
+                        System.Drawing.Rectangle rect = new System.Drawing.Rectangle(0, 0, image.Width, image.Height);
+                        System.Drawing.Imaging.BitmapData imageData =
+                            image.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite,
+                            image.PixelFormat);
 
-                        RGBArray rgbarr = new RGBArray(bmpData);
+                        RGBArray rgbArr = new RGBArray(imageData);
+                        testCLib(rgbArr);
+
+                        Marshal.Copy(rgbArr.ToByteArray(), 0, imageData.Scan0, rgbArr.Length);
+                        image.UnlockBits(imageData);
+
+                        image.Save("blurred.png");
                     }
                     else
                     {

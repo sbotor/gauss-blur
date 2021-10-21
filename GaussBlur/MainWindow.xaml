@@ -71,7 +71,7 @@
 
             </Grid>
 
-            <Button x:Name="BlurButton" Content="Blur" Height="30" Width="Auto" Margin="40"/>
+            <Button x:Name="BlurButton" Content="Blur" Click="BlurButton_Click" Height="30" Width="Auto" Margin="40"/>
 
             <Button x:Name="TestButton" Content="Test" Click="TestButton_Click" Width="Auto"/>
             <Label x:Name="TestLabel" Content="Test"/>
