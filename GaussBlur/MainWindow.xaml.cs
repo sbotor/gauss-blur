@@ -33,14 +33,14 @@ namespace GaussBlur
         
         private string outFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
 
-        private int kernelSize = 255;
+        private int kernelSize = 127;
         private double stdDev = 8;
-        private int threadCount = 12;
+        private int threadCount = 64;
 
         public MainWindow()
         {
             InitializeComponent();
-            InpFilenameBox.Text = inpFile;
+            inpFilenameBox.Text = inpFile;
             //InpFilenameBox.Text = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\test.png";
         }
 
@@ -89,7 +89,7 @@ namespace GaussBlur
         
         private void InpFilenameBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            string inpDir = InpFilenameBox.Text;
+            string inpDir = inpFilenameBox.Text;
             if (inpDir != null && inpDir != "")
             {
                 try
@@ -98,8 +98,8 @@ namespace GaussBlur
                     {
                         Uri imageUri = new Uri(inpDir);
                         BitmapImage image = new BitmapImage(imageUri);
-                        InputImagePreview.Source = image;
-                        OutFilenameBox.Text = outFile;
+                        inputImagePreview.Source = image;
+                        outFilenameBox.Text = outFile;
                     }
                     else
                     {
@@ -115,7 +115,7 @@ namespace GaussBlur
 
         private void BlurButton_Click(object sender, RoutedEventArgs e)
         {
-            string inpDir = InpFilenameBox.Text;
+            string inpDir = inpFilenameBox.Text;
             if (inpDir != null && inpDir != "")
             {
                 try
@@ -141,7 +141,7 @@ namespace GaussBlur
 
                         Uri imageUri = new Uri(outFile);
                         BitmapImage imgPrev = new BitmapImage(imageUri);
-                        OutputImagePreview.Source = imgPrev;
+                        outputImagePreview.Source = imgPrev;
                     }
                     else
                     {

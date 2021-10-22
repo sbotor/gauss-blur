@@ -5,48 +5,66 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GaussBlur"
         mc:Ignorable="d"
-        Title="GuassBlur" Height="Auto" Width="Auto">
-    <Grid Margin="10">
+        Height="600" Width="900">
 
+    <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <StackPanel Grid.Column="0">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-            <Grid  Margin="0 0 0 10">
+        
+        <StackPanel Grid.Column="0"
+                    VerticalAlignment="Top">
+            <Viewbox>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition/>
+                        <RowDefinition/>
+                    </Grid.RowDefinitions>
 
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="Auto"/>
-                </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
 
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                </Grid.ColumnDefinitions>
+                    <Label Grid.Row="0">Input</Label>
+                    <Label Grid.Row="1">Output</Label>
 
-                <Label Grid.Row="0">Input</Label>
-                <Label Grid.Row="1">Output</Label>
+                    <TextBox x:Name="inpFilenameBox"
+                             Grid.Column="1"
+                                 LostFocus="InpFilenameBox_LostFocus"/>
+                    <TextBox x:Name="outFilenameBox"
+                                 Grid.Row="1"
+                                 Grid.Column="1"/>
 
-                <TextBox x:Name="InpFilenameBox" Grid.Column="1" MinWidth="200" LostFocus="InpFilenameBox_LostFocus"/>
-                <TextBox x:Name="OutFilenameBox" Grid.Row="1" Grid.Column="1" MinWidth="20"/>
+                    <Button x:Name="browseInpFile"
+                                Content="Browse"
+                                Grid.Row="0" Grid.Column="2"/>
+                    <Button x:Name="browseOutFile"
+                                Content="Browse" Grid.Row="1"
+                                Grid.Column="2"/>
 
-                <Button x:Name="BrowseInpFile" Content="Browse" Grid.Row="0" Grid.Column="2" Width="Auto"/>
-                <Button x:Name="BrowseOutFile" Content="Browse" Grid.Row="1" Grid.Column="2" Width="Auto"/>
-
-            </Grid>
+                </Grid>
+            </Viewbox>
 
             <WrapPanel Orientation="Horizontal">
-                <Label Content="Library to use:" Margin="0 0 30 0"/>
-                <RadioButton x:Name="UseC" Content="C Library" GroupName="LibraryGroup" Margin="0 0 30 0" VerticalAlignment="Center"/>
-                <RadioButton x:Name="UseAsm" Content="Asm Library" GroupName="LibraryGroup" VerticalAlignment="Center"/>
+                <Label Content="Library to use:"/>
+                <RadioButton x:Name="useCRadio" 
+                             Content="C Library"
+                             GroupName="LibraryGroup"/>
+                <RadioButton x:Name="useAsmRadio"
+                             Content="Asm Library"
+                             GroupName="LibraryGroup"/>
             </WrapPanel>
 
             <Grid>
-
                 <Grid.RowDefinitions>
                     <RowDefinition/>
                     <RowDefinition/>
@@ -54,41 +72,60 @@
                 </Grid.RowDefinitions>
 
                 <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition/>
                 </Grid.ColumnDefinitions>
 
                 <Label Content="Threads"/>
-                <TextBox x:Name="ThreadNumberBox" Grid.Column="2" MinWidth="30"/>
+                <TextBox x:Name="threadNumberBox"
+                         Grid.Column="2"/>
 
-                <Label Content="Kernel size" Grid.Row="1"/>
-                <TextBox x:Name="KernelSizeBox" Grid.Row="1" Grid.Column="2" MinWidth="30"/>
-                
-                <Label Content="Standard deviation" Grid.Row="2"/>
-                <TextBox x:Name="SDBox" Grid.Row="2" Grid.Column="2" MinWidth="30"/>
+                <Label Content="Kernel size"
+                       Grid.Row="1"/>
+                <TextBox x:Name="kernelSizeBox"
+                         Grid.Row="1" Grid.Column="2"/>
 
+                <Label Content="Standard deviation"
+                       Grid.Row="2"/>
+                <TextBox x:Name="stdDevBox"
+                         Grid.Row="2"
+                         Grid.Column="2"/>
             </Grid>
 
-            <Button x:Name="BlurButton" Content="Blur" Click="BlurButton_Click" Height="30" Width="Auto" Margin="40"/>
+            <Button x:Name="blurButton"
+                    Content="Blur"
+                    Click="BlurButton_Click"/>
 
         </StackPanel>
 
-        <Grid Grid.Column="1">
-
+        <Grid Grid.Row="1"
+              Grid.Column="0">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
+                <RowDefinition/>
             </Grid.RowDefinitions>
 
-            <Label Content="Input file" Grid.Row="0"/>
-            <Image x:Name="InputImagePreview" Grid.Row="1" MinWidth="100" MaxWidth="400" MinHeight="100" MaxHeight="400" Stretch="Uniform" Source="https://www-arch.polsl.pl/logo/PublishingImages/Politechnika_Sl_logo_pl/pl/czarnobiale/politechnika_sl_logo_bw_poziom_pl_rgb.jpg"/>
-
-            <Label Content="Output file" Grid.Row="2"/>
-            <Image x:Name="OutputImagePreview" Grid.Row="3" MinWidth="100" MaxWidth="400" MinHeight="100" MaxHeight="400" Stretch="Uniform" Source="https://www-arch.polsl.pl/Jednostki/RN2-BBN/PublishingImages/politechnika_sl_logo_pion_inwersja_pl_rgb.png"/>
+            <Label Content="Input file"
+                   Grid.Row="0"/>
+            <Image x:Name="inputImagePreview"
+                   Grid.Row="1"
+                   Stretch="Uniform"
+                   StretchDirection="DownOnly"
+                   Source="https://www-arch.polsl.pl/logo/PublishingImages/Politechnika_Sl_logo_pl/pl/czarnobiale/politechnika_sl_logo_bw_poziom_pl_rgb.jpg"/>
 
         </Grid>
 
+        <StackPanel Grid.Row="1"
+                    Grid.Column="1">
+
+            <Label Content="Output file"/>
+            <Image x:Name="outputImagePreview"
+                   Stretch="Uniform"
+                   StretchDirection="DownOnly"
+                   Source="https://www-arch.polsl.pl/Jednostki/RN2-BBN/PublishingImages/politechnika_sl_logo_pion_inwersja_pl_rgb.png"/>
+
+        </StackPanel>
     </Grid>
 </Window>
