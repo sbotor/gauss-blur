@@ -1,24 +1,14 @@
 ﻿#define CTEST
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using System.IO;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Diagnostics;
+using System.Text.RegularExpressions;
 
 namespace GaussBlur
 {
@@ -27,21 +17,21 @@ namespace GaussBlur
     /// </summary>
     public partial class MainWindow : Window
     {
-        private string inpFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\kaiki.png";
-        //private string inpFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\test.png";
-        //private string inpFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\4k.jpg";
-        
-        private string outFile = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
+        private static int kernelSize = 127;
+        private static double stdDev = 8;
+        private static int threadCount = 64;
 
-        private int kernelSize = 127;
-        private double stdDev = 8;
-        private int threadCount = 64;
+        private static string inpFileDir = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\kaiki.png";
+
+        private static string outFileDir = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
+
+        private static Regex numRegex = new Regex(@"[0-9]+");
 
         public MainWindow()
         {
             InitializeComponent();
-            inpFilenameBox.Text = inpFile;
-            //InpFilenameBox.Text = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\test.png";
+            inpFilenameBox.Text = inpFileDir;
+            outFilenameBox.Text = outFileDir;
         }
 
         private void testCLibThreads(RGBArray rgbArr, int n)
@@ -87,7 +77,7 @@ namespace GaussBlur
             }
         }
         
-        private void InpFilenameBox_LostFocus(object sender, RoutedEventArgs e)
+        private void inpFilenameBox_LostFocus(object sender, RoutedEventArgs e)
         {
             string inpDir = inpFilenameBox.Text;
             if (inpDir != null && inpDir != "")
@@ -96,10 +86,8 @@ namespace GaussBlur
                 {
                     if (File.Exists(inpDir))
                     {
-                        Uri imageUri = new Uri(inpDir);
-                        BitmapImage image = new BitmapImage(imageUri);
-                        inputImagePreview.Source = image;
-                        outFilenameBox.Text = outFile;
+                        inpFileDir = inpDir;
+                        loadInpPreview();
                     }
                     else
                     {
@@ -113,7 +101,23 @@ namespace GaussBlur
             }
         }
 
-        private void BlurButton_Click(object sender, RoutedEventArgs e)
+        private void outFilenameBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            string outDir = inpFilenameBox.Text;
+            if (outDir != null && outDir != "")
+            {
+                try
+                {
+                    outFileDir = outDir;
+                }
+                catch (UriFormatException exc)
+                {
+                    Console.WriteLine($"Cannot open file: {exc.Data}.");
+                }
+            }
+        }
+
+        private void blurButton_Click(object sender, RoutedEventArgs e)
         {
             string inpDir = inpFilenameBox.Text;
             if (inpDir != null && inpDir != "")
@@ -137,11 +141,9 @@ namespace GaussBlur
                         Marshal.Copy(rgbArr.ToByteArray(), 0, imageData.Scan0, rgbArr.Length);
                         image.UnlockBits(imageData);
 
-                        image.Save(outFile);
+                        image.Save(outFileDir);
 
-                        Uri imageUri = new Uri(outFile);
-                        BitmapImage imgPrev = new BitmapImage(imageUri);
-                        outputImagePreview.Source = imgPrev;
+                        loadOutPreview();
                     }
                     else
                     {
@@ -152,6 +154,57 @@ namespace GaussBlur
                 {
                     Console.WriteLine($"Cannot open file: {exc.Data}.");
                 }
+            }
+        }
+
+        private void loadInpPreview()
+        {
+            try
+            {
+                if (File.Exists(inpFileDir))
+                {
+                    inpImagePreview.Source = new BitmapImage(new Uri(inpFileDir));
+                }
+            }
+            catch (UriFormatException exc)
+            {
+                Console.WriteLine($"Cannot open file: {exc.Data}.");
+            }
+        }
+        
+        private void loadOutPreview()
+        {
+            try
+            {
+                if (File.Exists(outFileDir))
+                {
+                    outImagePreview.Source = new BitmapImage(new Uri(outFileDir));
+                }
+            }
+            catch (UriFormatException exc)
+            {
+                Console.WriteLine($"Cannot open file: {exc.Data}.");
+            }
+        }
+
+        private void threadCountBox_PreviewTextInput(object sender, System.Windows.Input.TextCompositionEventArgs e)
+        {
+            e.Handled = !numRegex.IsMatch(e.Text);
+        }
+
+        private void threadCountBox_Pasting(object sender, DataObjectPastingEventArgs e)
+        {
+            if (e.DataObject.GetDataPresent(typeof(string)))
+            {
+                string text = (string)e.DataObject.GetData(typeof(string));
+                if (!numRegex.IsMatch(text))
+                {
+                    e.CancelCommand();
+                }
+            }
+            else
+            {
+                e.CancelCommand();
             }
         }
     }

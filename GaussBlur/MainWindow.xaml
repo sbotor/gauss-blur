@@ -5,127 +5,241 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:GaussBlur"
         mc:Ignorable="d"
-        Height="600" Width="900">
+        Title="GaussBlur"
+        Height="600" Width="900"
+        MinHeight="300" MinWidth="450"
+        Background="#2b2b3b">
 
-    <Grid>
+    <Window.Resources>
+
+        <Style x:Key="LabelStyle"
+               TargetType="Label">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <Style x:Key="TextBoxStyle"
+               TargetType="TextBox">
+            <Setter Property="Height" Value="25"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="#404059"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style x:Key="NumbBoxStyle"
+               BasedOn="{StaticResource TextBoxStyle}"
+               TargetType="TextBox">
+            <Setter Property="MaxLength" Value="2"/>
+            <Setter Property="Width" Value="30"/>
+        </Style>
+
+        <Style x:Key="ButtonStyle"
+               TargetType="Button">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Background" Value="#404059"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+
+        <Style x:Key="RadioButtonStyle"
+               TargetType="RadioButton">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style x:Key="BorderStyle"
+               TargetType="Border">
+            <Setter Property="BorderBrush" Value="White"/>
+            <Setter Property="BorderThickness" Value="0.5"/>
+            <Setter Property="CornerRadius" Value="5"/>
+            <Setter Property="Margin" Value="5"/>
+        </Style>
+
+        <Style x:Key="ImageBorderStyle"
+               BasedOn="{StaticResource BorderStyle}"
+               TargetType="Border">
+            <Setter Property="MinHeight" Value="200"/>
+            <Setter Property="MinWidth" Value="400"/>
+        </Style>
+
+        <Style x:Key="ImageStyle"
+               TargetType="Image">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Stretch" Value="Uniform"/>
+            <Setter Property="StretchDirection" Value="DownOnly"/>
+        </Style>
+
+    </Window.Resources>
+
+    <Grid Margin="5">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto"/>
+            <ColumnDefinition Width="400"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+        <Grid Grid.ColumnSpan="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
 
-        
-        <StackPanel Grid.Column="0"
-                    VerticalAlignment="Top">
-            <Viewbox>
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition/>
-                    </Grid.RowDefinitions>
-
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                        <ColumnDefinition/>
-                    </Grid.ColumnDefinitions>
-
-                    <Label Grid.Row="0">Input</Label>
-                    <Label Grid.Row="1">Output</Label>
-
-                    <TextBox x:Name="inpFilenameBox"
-                             Grid.Column="1"
-                                 LostFocus="InpFilenameBox_LostFocus"/>
-                    <TextBox x:Name="outFilenameBox"
-                                 Grid.Row="1"
-                                 Grid.Column="1"/>
-
-                    <Button x:Name="browseInpFile"
-                                Content="Browse"
-                                Grid.Row="0" Grid.Column="2"/>
-                    <Button x:Name="browseOutFile"
-                                Content="Browse" Grid.Row="1"
-                                Grid.Column="2"/>
-
-                </Grid>
-            </Viewbox>
-
-            <WrapPanel Orientation="Horizontal">
-                <Label Content="Library to use:"/>
-                <RadioButton x:Name="useCRadio" 
-                             Content="C Library"
-                             GroupName="LibraryGroup"/>
-                <RadioButton x:Name="useAsmRadio"
-                             Content="Asm Library"
-                             GroupName="LibraryGroup"/>
-            </WrapPanel>
-
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                    <RowDefinition/>
-                </Grid.RowDefinitions>
-
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition/>
-                    <ColumnDefinition/>
-                </Grid.ColumnDefinitions>
-
-                <Label Content="Threads"/>
-                <TextBox x:Name="threadNumberBox"
-                         Grid.Column="2"/>
-
-                <Label Content="Kernel size"
-                       Grid.Row="1"/>
-                <TextBox x:Name="kernelSizeBox"
-                         Grid.Row="1" Grid.Column="2"/>
-
-                <Label Content="Standard deviation"
-                       Grid.Row="2"/>
-                <TextBox x:Name="stdDevBox"
-                         Grid.Row="2"
-                         Grid.Column="2"/>
-            </Grid>
-
-            <Button x:Name="blurButton"
-                    Content="Blur"
-                    Click="BlurButton_Click"/>
-
-        </StackPanel>
-
-        <Grid Grid.Row="1"
-              Grid.Column="0">
             <Grid.RowDefinitions>
-                <RowDefinition/>
-                <RowDefinition/>
-                <RowDefinition/>
-                <RowDefinition/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <Label Content="Input file"
-                   Grid.Row="0"/>
-            <Image x:Name="inputImagePreview"
+            <Border Style="{StaticResource BorderStyle}">
+                <Image x:Name="inpImagePreview"
+                       Style="{StaticResource ImageStyle}"/>
+            </Border>
+
+            <Border Grid.Column="1"
+                    Style="{StaticResource BorderStyle}">
+                <Image x:Name="outImagePreview"
+                       Style="{StaticResource ImageStyle}"/>
+            </Border>
+
+            <Label Content="Input image"
+                   Style="{StaticResource LabelStyle}"
                    Grid.Row="1"
-                   Stretch="Uniform"
-                   StretchDirection="DownOnly"
-                   Source="https://www-arch.polsl.pl/logo/PublishingImages/Politechnika_Sl_logo_pl/pl/czarnobiale/politechnika_sl_logo_bw_poziom_pl_rgb.jpg"/>
+                   HorizontalAlignment="Center"/>
+            <Label Content="Output image"
+                   Style="{StaticResource LabelStyle}"
+                   Grid.Row="1"
+                   Grid.Column="1"
+                   HorizontalAlignment="Center"/>
 
         </Grid>
 
-        <StackPanel Grid.Row="1"
-                    Grid.Column="1">
+        <StackPanel Grid.Row="2"
+                    Grid.ColumnSpan="2">
+            <Border Style="{StaticResource BorderStyle}">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
 
-            <Label Content="Output file"/>
-            <Image x:Name="outputImagePreview"
-                   Stretch="Uniform"
-                   StretchDirection="DownOnly"
-                   Source="https://www-arch.polsl.pl/Jednostki/RN2-BBN/PublishingImages/politechnika_sl_logo_pion_inwersja_pl_rgb.png"/>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Label Content="Input"
+                            Style="{StaticResource LabelStyle}"/>
+                    <TextBox x:Name="inpFilenameBox"
+                             Grid.Column="1"
+                             Style="{StaticResource TextBoxStyle}"
+                             LostFocus="inpFilenameBox_LostFocus"/>
+                    <Button x:Name="browseInpButton"
+                            Content="Browse"
+                            Grid.Column="2"
+                            Style="{StaticResource ButtonStyle}"/>
+
+                    <Label Content="Output"
+                            Grid.Row="1"
+                            Style="{StaticResource LabelStyle}"/>
+                    <TextBox x:Name="outFilenameBox"
+                             Grid.Row="1"
+                             Grid.Column="1"
+                             Style="{StaticResource TextBoxStyle}"
+                             LostFocus="outFilenameBox_LostFocus"/>
+                    <Button x:Name="browseOutButton"
+                            Content="Browse"
+                            Grid.Row="1"
+                            Grid.Column="3"
+                            Style="{StaticResource ButtonStyle}"/>
+                </Grid>
+            </Border>
+
+            <Grid>
+
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                    
+                <WrapPanel>
+
+                    <Border Style="{StaticResource BorderStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <Label Content="Thread Count"
+                                   Style="{StaticResource LabelStyle}"/>
+                            <TextBox x:Name="threadCountBox"
+                                     Style="{StaticResource NumbBoxStyle}"
+                                     PreviewTextInput="threadCountBox_PreviewTextInput"
+                                     DataObject.Pasting="threadCountBox_Pasting"/>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource BorderStyle}">
+                        <WrapPanel Orientation="Horizontal">
+                            <Label Content="Library to use:"
+                           Style="{StaticResource LabelStyle}"/>
+                            <RadioButton x:Name="useCRadio"
+                                 Content="C Library"
+                                 GroupName="libRadioButtons"
+                                 Style="{StaticResource RadioButtonStyle}"/>
+                            <RadioButton x:Name="useAsmRadio"
+                                 Content="Asm Library"
+                                 GroupName="libRadioButtons"
+                                 Style="{StaticResource RadioButtonStyle}"/>
+
+                        </WrapPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource BorderStyle}">
+                        <WrapPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Label Content="Kernel size"
+                                   Style="{StaticResource LabelStyle}"/>
+                                <TextBox x:Name="kernelSizeBox"
+                                     Grid.Column="1"
+                                     Style="{StaticResource NumbBoxStyle}"/>
+                            </Grid>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Label Content="Standard deviation"
+                                   Style="{StaticResource LabelStyle}"/>
+                                <TextBox x:Name="stdDevBo"
+                                     Grid.Column="1"
+                                     Style="{StaticResource NumbBoxStyle}"/>
+                            </Grid>
+                        </WrapPanel>
+                    </Border>
+                </WrapPanel>
+
+                <Button x:Name="blurButton"
+                        Content="Blur"
+                        Style="{StaticResource ButtonStyle}"
+                        Width="100"
+                        HorizontalAlignment="Stretch"
+                        Grid.Column="1"
+                        Click="blurButton_Click"/>
+            </Grid>
+
 
         </StackPanel>
+
     </Grid>
+
 </Window>
