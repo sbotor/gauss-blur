@@ -28,11 +28,10 @@
             <Setter Property="Foreground" Value="White"/>
         </Style>
 
-        <Style x:Key="NumbBoxStyle"
+        <Style x:Key="NumBoxStyle"
                BasedOn="{StaticResource TextBoxStyle}"
                TargetType="TextBox">
-            <Setter Property="MaxLength" Value="2"/>
-            <Setter Property="Width" Value="30"/>
+            <Setter Property="MinWidth" Value="30"/>
         </Style>
 
         <Style x:Key="ButtonStyle"
@@ -167,7 +166,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                    
+
                 <WrapPanel>
 
                     <Border Style="{StaticResource BorderStyle}">
@@ -175,9 +174,11 @@
                             <Label Content="Thread Count"
                                    Style="{StaticResource LabelStyle}"/>
                             <TextBox x:Name="threadCountBox"
-                                     Style="{StaticResource NumbBoxStyle}"
-                                     PreviewTextInput="threadCountBox_PreviewTextInput"
-                                     DataObject.Pasting="threadCountBox_Pasting"/>
+                                     Style="{StaticResource NumBoxStyle}"
+                                     MaxLength="2"
+                                     Width="30"
+                                     PreviewTextInput="numBox_PreviewTextInput"
+                                     DataObject.Pasting="numBox_Pasting"/>
                         </StackPanel>
                     </Border>
 
@@ -206,10 +207,12 @@
                                 </Grid.ColumnDefinitions>
 
                                 <Label Content="Kernel size"
-                                   Style="{StaticResource LabelStyle}"/>
+                                       Style="{StaticResource LabelStyle}"/>
                                 <TextBox x:Name="kernelSizeBox"
-                                     Grid.Column="1"
-                                     Style="{StaticResource NumbBoxStyle}"/>
+                                         Grid.Column="1"
+                                         Style="{StaticResource NumBoxStyle}"
+                                         PreviewTextInput="numBox_PreviewTextInput"
+                                         DataObject.Pasting="numBox_Pasting"/>
                             </Grid>
 
                             <Grid>
@@ -219,10 +222,12 @@
                                 </Grid.ColumnDefinitions>
 
                                 <Label Content="Standard deviation"
-                                   Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="stdDevBo"
-                                     Grid.Column="1"
-                                     Style="{StaticResource NumbBoxStyle}"/>
+                                       Style="{StaticResource LabelStyle}"/>
+                                <TextBox x:Name="stdDevBox"
+                                         Grid.Column="1"
+                                         Style="{StaticResource NumBoxStyle}"
+                                         PreviewTextInput="numBox_PreviewTextInput"
+                                         DataObject.Pasting="numBox_Pasting"/>
                             </Grid>
                         </WrapPanel>
                     </Border>

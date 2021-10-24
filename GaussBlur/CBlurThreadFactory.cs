@@ -6,17 +6,21 @@ namespace GaussBlur
 {
     unsafe class CBlurThreadFactory : BlurThreadFactory
     {
-        public CBlurThreadFactory(double* dataArrP,
-            double* helpArrP, int imageStride,
-            int imageHeight, double* kernP, int kernSize,
-            int threadCount) :
-            base(dataArrP, helpArrP, imageStride, imageHeight,
-                kernP, kernSize, threadCount)
+        public CBlurThreadFactory(int threadCount) :
+            base(threadCount)
         { }
 
-        public override IBlurThread CreateThread(int start, int end)
-        {
-            return new CBlurThread(this, start, end);
+        public override BlurThread CreateThread(double* dataP,
+            double* helperP, int startPos, int endPos, int imageStride,
+            int imageHeight, double* kernelP, int kernSize)
+        {   
+            BlurThread newItem = new CBlurThread(this, dataP, helperP,
+                startPos, endPos, imageStride,
+                imageHeight, kernelP, kernSize);
+
+            Items.Add(newItem);
+
+            return newItem;
         }
     }
 }

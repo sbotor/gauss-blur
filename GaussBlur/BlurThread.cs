@@ -7,39 +7,31 @@ namespace GaussBlur
 {
     abstract unsafe class BlurThread
     {
-        //protected readonly double* src;
-        //protected readonly double* dest;
+        protected readonly double* data;
+        protected readonly double* helper;
         protected readonly int start;
         protected readonly int end;
-        //protected readonly int height;
-        //protected readonly int stride;
-        //protected readonly double* kernel;
-        //protected readonly int kernelSize;
-        protected BlurThreadFactory factory;
+        protected readonly int stride;
+        protected readonly int height;
+        protected double* kernel;
+        protected int kernelSize;
+        protected BlurThreadFactory parentFactory;
 
-        //protected CountdownEvent blurXFinished;
-
-        //protected BlurThread(double* srcArrayP, double* destArrayP,
-        //    int startPos, int endPos, int imageStride,
-        //    int imageHeight, double* kernP, int kernSize,
-        //    CountdownEvent cde)
-        //{
-        //    src = srcArrayP;
-        //    dest = destArrayP;
-        //    start = startPos;
-        //    end = endPos;
-        //    stride = imageStride;
-        //    height = imageHeight;
-        //    kernel = kernP;
-        //    kernelSize = kernSize;
-        //    blurXFinished = cde;
-        //}
-
-        protected BlurThread(BlurThreadFactory parent, int startPos, int endPos)
+        protected BlurThread(BlurThreadFactory parent, double* dataP,
+            double* helperP, int startPos, int endPos, int imageStride,
+            int imageHeight, double* kernelP, int kernSize)
         {
-            factory = parent;
+            parentFactory = parent;
+            data = dataP;
+            helper = helperP;
+            stride = imageStride;
+            height = imageHeight;
+            kernel = kernelP;
+            kernelSize = kernSize;
             start = startPos;
             end = endPos;
         }
+
+        public abstract void Run();
     }
 }

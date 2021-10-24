@@ -35,7 +35,7 @@ namespace GaussBlur
 
             int maxCenterOffset = (kernelSize - 1) / 2;
             double variance = sd * sd,
-                constance = 1 / (Math.Sqrt(2.0 * Math.PI * variance)),
+                constance = 1 / Math.Sqrt(2.0 * Math.PI * variance),
                 kernelSum = 0;
 
             for (int offset = -maxCenterOffset; offset <= maxCenterOffset; offset++)

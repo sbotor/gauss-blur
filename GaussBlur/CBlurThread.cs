@@ -5,45 +5,39 @@ using System.Threading;
 
 namespace GaussBlur
 {
-    unsafe class CBlurThread : BlurThread, IBlurThread
-    {
-        //public CBlurThread(double* srcArrayP, double* destArrayP,
-        //    int startPos, int endPos, int imageStride,
-        //    int imageHeight, double* kernP, int kernSize,
-        //    CountdownEvent cde) :
-        //    base(srcArrayP, destArrayP,
-        //    startPos, endPos, imageStride,
-        //    imageHeight, kernP, kernSize, cde)
-        //{}
-        
-        public CBlurThread(BlurThreadFactory parent, int startPos, int endPos) :
-            base(parent, startPos, endPos)
+    unsafe class CBlurThread : BlurThread
+    {   
+        public CBlurThread(CBlurThreadFactory parent, double* dataP,
+            double* helperP, int startPos, int endPos, int imageStride,
+            int imageHeight, double* kernelP, int kernSize) :
+            base(parent, dataP, helperP, startPos, endPos, imageStride, imageHeight,
+                kernelP, kernSize)
         { }
 
-        public void Run()
+        public override void Run()
         {
             CLib.blurX(
-                factory.Data,
-                factory.Help,
+                data,
+                helper,
                 start,
                 end,
-                factory.ImageStride,
-                factory.ImageHeight,
-                factory.KernelP,
-                factory.KernelSize);
+                stride,
+                height,
+                kernel,
+                kernelSize);
 
-            factory.BlurXFinished.Signal();
-            factory.BlurXFinished.Wait();
+            parentFactory.BlurXFinished.Signal();
+            parentFactory.BlurXFinished.Wait();
 
             CLib.blurY(
-                factory.Help,
-                factory.Data,
+                helper,
+                data,
                 start,
                 end,
-                factory.ImageStride,
-                factory.ImageHeight,
-                factory.KernelP,
-                factory.KernelSize);
+                stride,
+                height,
+                kernel,
+                kernelSize);
         }
     }
 }
