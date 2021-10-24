@@ -13,9 +13,10 @@ namespace GaussBlur
         protected readonly int end;
         protected readonly int stride;
         protected readonly int height;
-        protected double* kernel;
-        protected int kernelSize;
-        protected BlurThreadFactory parentFactory;
+        protected readonly double* kernel;
+        protected readonly int kernelSize;
+        protected readonly BlurThreadFactory parentFactory;
+        protected readonly Thread thread;
 
         protected BlurThread(BlurThreadFactory parent, double* dataP,
             double* helperP, int startPos, int endPos, int imageStride,
@@ -30,8 +31,20 @@ namespace GaussBlur
             kernelSize = kernSize;
             start = startPos;
             end = endPos;
+
+            thread = new Thread(Run);
         }
 
         public abstract void Run();
+
+        public void Start()
+        {
+            thread.Start();
+        }
+
+        public void Join()
+        {
+            thread.Join();
+        }
     }
 }

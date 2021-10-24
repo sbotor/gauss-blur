@@ -17,7 +17,7 @@ namespace GaussBlur
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static int kernelSize = 2047;
+        private static int kernelSize = 3;
         private static double stdDev = 16;
         private static int threadCount = 12;
 
@@ -30,9 +30,15 @@ namespace GaussBlur
         public MainWindow()
         {
             InitializeComponent();
+            
             inpFilenameBox.Text = inpFileDir;
             outFilenameBox.Text = outFileDir;
-            //outFilenameBox.Text = Directory.GetCurrentDirectory();
+
+            threadCountBox.Text = threadCount.ToString();
+            kernelSizeBox.Text = kernelSize.ToString();
+            stdDevBox.Text = stdDev.ToString();
+
+            Debug.WriteLine("Started.");
         }
         
         private void inpFilenameBox_LostFocus(object sender, RoutedEventArgs e)
@@ -48,12 +54,12 @@ namespace GaussBlur
                     }
                     else
                     {
-                        Console.WriteLine($"Cannot open file: {inpFileDir}.");
+                        Debug.WriteLine($"Cannot open file: {inpFileDir}.");
                     }
                 }
                 catch (UriFormatException exc)
                 {
-                    Console.WriteLine($"Cannot open file: {exc.Data}.");
+                    Debug.WriteLine($"Cannot open file: {exc.Data}.");
                 }
             }
         }
@@ -65,7 +71,8 @@ namespace GaussBlur
 
         private bool checkThreadCount()
         {
-            return int.TryParse(threadCountBox.Text, out threadCount);
+            return int.TryParse(threadCountBox.Text, out threadCount)
+                && threadCount > 0 && threadCount <= 64;
         }
 
         private bool checkKernelSize()
@@ -119,7 +126,7 @@ namespace GaussBlur
                             sw.Start();
                             blur.Blur();
                             sw.Stop();
-                            MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000 } seconds.");
+                            MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000.0 } seconds.");
 
                             Marshal.Copy(rgbArr.ToByteArray(), 0, imageData.Scan0, rgbArr.Length);
                             image.UnlockBits(imageData);
@@ -130,12 +137,12 @@ namespace GaussBlur
                         }
                         else
                         {
-                            Console.WriteLine($"Cannot open file: {inpDir}.");
+                            Debug.WriteLine($"Cannot open file: {inpDir}.");
                         }
                     }
                     catch (UriFormatException exc)
                     {
-                        Console.WriteLine($"Cannot open file: {exc.Data}.");
+                        Debug.WriteLine($"Cannot open file: {exc.Data}.");
                     }
                 }
             }
@@ -152,7 +159,7 @@ namespace GaussBlur
             }
             catch (UriFormatException exc)
             {
-                Console.WriteLine($"Cannot open file: {exc.Data}.");
+                Debug.WriteLine($"Cannot open file: {exc.Data}.");
             }
         }
         
@@ -167,7 +174,7 @@ namespace GaussBlur
             }
             catch (UriFormatException exc)
             {
-                Console.WriteLine($"Cannot open file: {exc.Data}.");
+                Debug.WriteLine($"Cannot open file: {exc.Data}.");
             }
         }
 

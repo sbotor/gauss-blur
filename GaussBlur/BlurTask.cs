@@ -26,7 +26,6 @@ namespace GaussBlur
 
         public void Blur()
         {
-            Thread[] threads = new Thread[Factory.ThreadCount];
             int[] slices = Image.Slice(Factory.ThreadCount);
             double[] helperArray = new double[Image.Length];
             
@@ -38,7 +37,7 @@ namespace GaussBlur
                 {
                     for (int i = 0; i < Factory.ThreadCount; i++)
                     {
-                        BlurThread threadParam = Factory.CreateThread(
+                        BlurThread thread = Factory.CreateThread(
                             dataP,
                             helperP,
                             slices[i],
@@ -48,13 +47,12 @@ namespace GaussBlur
                             kernelP,
                             Kernel.Size);
 
-                        threads[i] = new Thread(new ThreadStart(threadParam.Run));
-                        threads[i].Start();
+                        thread.Start();
                     }
 
                     for (int i = 0; i < Factory.ThreadCount; i++)
                     {
-                        threads[i].Join();
+                        Factory.Items[i].Join();
                     }
                 }
             }
