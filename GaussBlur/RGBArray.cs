@@ -58,7 +58,7 @@ namespace GaussBlur
             data = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Select(bytes, Convert.ToDouble));
         }
 
-        public RGBArray(Bitmap image)
+        private RGBArray(Bitmap image)
         {
             Rectangle rect = new Rectangle(0, 0, image.Width, image.Height);
             System.Drawing.Imaging.BitmapData imageData = image.LockBits(

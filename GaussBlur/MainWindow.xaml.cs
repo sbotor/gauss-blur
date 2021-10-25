@@ -113,23 +113,15 @@ namespace GaussBlur
                         if (File.Exists(inpDir))
                         {
                             Bitmap image = new Bitmap(inpDir);
-                            System.Drawing.Rectangle rect = new System.Drawing.Rectangle(0, 0, image.Width, image.Height);
-                            System.Drawing.Imaging.BitmapData imageData =
-                                image.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite,
-                                image.PixelFormat);
-
-                            RGBArray rgbArr = new RGBArray(imageData);
+                            
                             CBlurThreadFactory factory = new CBlurThreadFactory(threadCount);
-                            BlurTask blur = new BlurTask(factory, rgbArr, new GaussKernel(kernelSize, stdDev));
+                            BlurTask blur = new BlurTask(factory, image, new GaussKernel(kernelSize, stdDev));
                             Stopwatch sw = new Stopwatch();
 
                             sw.Start();
                             blur.Blur();
                             sw.Stop();
                             MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000.0 } seconds.");
-
-                            Marshal.Copy(rgbArr.ToByteArray(), 0, imageData.Scan0, rgbArr.Length);
-                            image.UnlockBits(imageData);
 
                             image.Save(outFileDir);
 
