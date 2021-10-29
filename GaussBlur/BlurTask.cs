@@ -68,13 +68,5 @@ namespace GaussBlur
             Marshal.Copy(rgbArray.ToByteArray(), 0, imageData.Scan0, rgbArray.Length);
             Image.UnlockBits(imageData);
         }
-
-        public void Save(string filename)
-        {
-            if (File.Exists(filename))
-            {
-                // TODO
-            }
-        }
     }
 }

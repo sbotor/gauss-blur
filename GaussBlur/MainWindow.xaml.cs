@@ -21,11 +21,15 @@ namespace GaussBlur
         private static double stdDev = 16;
         private static int threadCount = 12;
 
-        private static string inpFileDir = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\kaiki.png";
+        private static string inpFileDir = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\aei.jpg";
 
         private static string outFileDir = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
         
         private static Regex numRegex = new Regex(@"[0-9.]+");
+
+        private FileStream inpStream;
+        private Bitmap inpImage;
+        private System.Drawing.Imaging.BitmapData inpImageData;
 
         public MainWindow()
         {
@@ -39,6 +43,14 @@ namespace GaussBlur
             stdDevBox.Text = stdDev.ToString();
 
             Debug.WriteLine("Started.");
+        }
+
+        ~MainWindow()
+        {
+            if (inpStream.CanRead || inpStream.CanWrite)
+            {
+                inpStream.Close();
+            }
         }
         
         private void inpFilenameBox_LostFocus(object sender, RoutedEventArgs e)
@@ -89,6 +101,7 @@ namespace GaussBlur
         private void blurButton_Click(object sender, RoutedEventArgs e)
         {
             string inpDir = inpFilenameBox.Text;
+            loadInpPreview();
             if (inpDir != null && inpDir != "")
             {   
                 if (!checkThreadCount())
@@ -140,13 +153,36 @@ namespace GaussBlur
             }
         }
 
+        private void lockInpImage()
+        {
+            inpImageData = inpImage.LockBits(
+                new Rectangle(0, 0, inpImage.Width, inpImage.Height),
+                System.Drawing.Imaging.ImageLockMode.ReadWrite,
+                inpImage.PixelFormat);
+        }
+        
         private void loadInpPreview()
         {
             try
             {
                 if (File.Exists(inpFileDir))
                 {
-                    inpImagePreview.Source = new BitmapImage(new Uri(inpFileDir));
+                    if (inpStream != null && (inpStream.CanRead || inpStream.CanWrite))
+                    {
+                        inpStream.Close();
+                    }
+
+                    inpStream = File.Open(inpFileDir, FileMode.Open); ;
+                    //inpImagePreview.Source = new BitmapImage(new Uri(inpFileDir));
+                    inpImage = new Bitmap(inpStream);
+                    lockInpImage();
+
+                    inpImagePreview.Source = BitmapSource.Create(
+                        inpImageData.Width, inpImageData.Height,
+                        inpImage.HorizontalResolution, inpImage.VerticalResolution,
+                        System.Windows.Media.PixelFormats.Bgr24, null,
+                        inpImageData.Scan0, inpImageData.Stride * inpImageData.Height,
+                        inpImageData.Stride);
                 }
             }
             catch (UriFormatException exc)
