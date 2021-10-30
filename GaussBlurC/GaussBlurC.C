@@ -5,43 +5,6 @@ int addTest(int first, int second) {
 	return first + second;
 }
 
-//struct kernelStruct* createKernel(int size, double stdDev) {
-//	struct kernelStruct* kernelP = malloc(sizeof(struct kernelStruct));
-//
-//	const double PI = acos(-1.0);
-//
-//	kernelP->size = size;
-//	kernelP->maxCenterOffset = (size - 1) / 2;
-//	kernelP->data = malloc(size * sizeof(double));
-//
-//	double variance = stdDev * stdDev,
-//		constance = 1 / (sqrt(2.0 * PI * variance)),
-//		kernelSum = 0;
-//
-//	/*for (int offset = -kernelP->maxCenterOffset; offset <= 0; offset++) {
-//		double gaussValue = constance * exp(-(offset * offset) / (2 * variance));
-//		
-//		kernelP->data[offset + kernelP->maxCenterOffset] = gaussValue;
-//		kernelP->data[kernelP->size + offset - 1] = gaussValue;
-//		
-//		kernelSum += gaussValue;
-//	}*/
-//
-//	for (int offset = -kernelP->maxCenterOffset; offset <= kernelP->maxCenterOffset; offset++) {
-//		double gaussValue = constance * exp(-(offset * offset) / (2 * variance));
-//
-//		kernelP->data[offset + kernelP->maxCenterOffset] = gaussValue;
-//
-//		kernelSum += gaussValue;
-//	}
-//
-//	for (int offset = -kernelP->maxCenterOffset; offset <= kernelP->maxCenterOffset; offset++) {
-//		kernelP->data[offset + kernelP->maxCenterOffset] /= kernelSum;
-//	}
-//
-//	return kernelP;
-//}
-
 void normalizeColor(double* c) {
 	if (*c > 255)
 		*c = 255;
@@ -66,11 +29,11 @@ void normalizeColors(double* c) {
 		c[2] = 0;
 }
 
-void blurX(double* src, double* dest, int start, int end, int imageStride, int imageHeight, double* kernel, int kernelSize) {
-	int absStride = abs(imageStride), imageSize = absStride * imageHeight,
+void blurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
+	const int absStride = abs(imageStride), imageSize = absStride * imageHeight,
 		startRow = start / imageStride,
 		endRow = end / imageStride,
-		maxCenterOffset = (kernelSize - 1) / 2;
+		maxCenterOffset = 2;
 
 	// First pass.
 	for (int y = startRow; y < endRow; y++) {
@@ -107,11 +70,11 @@ void blurX(double* src, double* dest, int start, int end, int imageStride, int i
 	}
 }
 
-void blurY(double* src, double* dest, int start, int end, int imageStride, int imageHeight, double* kernel, int kernelSize) {
-	int absStride = abs(imageStride), imageSize = absStride * imageHeight,
+void blurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
+	const int absStride = abs(imageStride), imageSize = absStride * imageHeight,
 		startRow = start / imageStride,
 		endRow = end / imageStride,
-		maxCenterOffset = (kernelSize - 1) / 2;
+		maxCenterOffset = 2;
 
 	// Second pass.
 	for (int y = 0; y < imageHeight; y++) {

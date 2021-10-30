@@ -7,84 +7,54 @@ using System.IO;
 
 namespace GaussBlur
 {
-    public class RGBArray
+    public unsafe class RGBArray
     {
-        private readonly double[] data;
-        public double[] Data
-        {
-            get => data;
-        }
+        public byte* Data { get; private set; }
 
-        private readonly int width;
-        public int Width
-        {
-            get => width;
-        }
+        public int Width { get; private set; }
 
-        private readonly int height;
-        public int Height
-        {
-            get => height;
-        }
+        public int Height { get; private set; }
+        public int Stride { get; private set; }
 
-        private readonly int stride;
-        public int Stride
-        {
-            get => stride;
-        }
-
-        public int Length
-        {
-            get => data.Length;
-        }
-
-        public double this[int key]
-        {
-            get => data[key];
-            set => data[key] = value;
-        }
+        public int Length { get; private set; }
 
         public RGBArray(System.Drawing.Imaging.BitmapData imageData)
         {
-            width = imageData.Width;
-            height = imageData.Height;
-            stride = imageData.Stride;
+            Width = imageData.Width;
+            Height = imageData.Height;
+            Stride = imageData.Stride;
+            Length = Math.Abs(Stride) * Height;
 
-            int length = Math.Abs(imageData.Stride) * imageData.Height;
-            byte[] bytes = new byte[length];
-
-            Marshal.Copy(imageData.Scan0, bytes, 0, length);
-
-            data = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Select(bytes, Convert.ToDouble));
+            Data = (byte*)imageData.Scan0.ToPointer();
         }
 
-        private RGBArray(Bitmap image)
-        {
-            Rectangle rect = new Rectangle(0, 0, image.Width, image.Height);
-            System.Drawing.Imaging.BitmapData imageData = image.LockBits(
-                rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, image.PixelFormat);
+        //private RGBArray(Bitmap image)
+        //{
+        //    Rectangle rect = new Rectangle(0, 0, image.Width, image.Height);
+        //    System.Drawing.Imaging.BitmapData imageData = image.LockBits(
+        //        rect, System.Drawing.Imaging.ImageLockMode.ReadOnly, image.PixelFormat);
 
-            width = imageData.Width;
-            height = imageData.Height;
-            stride = imageData.Stride;
+        //    width = imageData.Width;
+        //    height = imageData.Height;
+        //    stride = imageData.Stride;
 
-            int length = Math.Abs(imageData.Stride) * imageData.Height;
-            byte[] bytes = new byte[length];
+        //    int length = Math.Abs(imageData.Stride) * imageData.Height;
+        //    byte[] bytes = new byte[length];
 
-            Marshal.Copy(imageData.Scan0, bytes, 0, length);
+        //    Marshal.Copy(imageData.Scan0, bytes, 0, length);
 
-            data = new double[length];
-            Array.Copy(bytes, data, length);
+        //    data = new double[length];
+        //    Array.Copy(bytes, data, length);
 
-            image.UnlockBits(imageData);
-        }
+        //    image.UnlockBits(imageData);
+        //}
 
-        public byte[] ToByteArray()
-        {
-            byte[] arr = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Select(data, Convert.ToByte));
+        //public byte[] ToByteArray()
+        //{
+        //    byte[] arr = System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Select(data, Convert.ToByte));
 
-            return arr;
-        }
+        //    return arr;
+        //}
 
         public int[] Slice(int n)
         {

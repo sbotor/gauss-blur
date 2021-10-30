@@ -17,19 +17,20 @@ namespace GaussBlur
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static int kernelSize = 3;
         private static double stdDev = 16;
         private static int threadCount = 12;
 
-        private static string inpFileDir = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\aei.jpg";
+        private static string inpFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\aei.jpg";
 
-        private static string outFileDir = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
+        private static string outFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
         
         private static Regex numRegex = new Regex(@"[0-9.]+");
 
         private FileStream inpStream;
         private Bitmap inpImage;
         private System.Drawing.Imaging.BitmapData inpImageData;
+
+        //private FileStream outStream;
 
         public MainWindow()
         {
@@ -39,7 +40,6 @@ namespace GaussBlur
             outFilenameBox.Text = outFileDir;
 
             threadCountBox.Text = threadCount.ToString();
-            kernelSizeBox.Text = kernelSize.ToString();
             stdDevBox.Text = stdDev.ToString();
 
             Debug.WriteLine("Started.");
@@ -87,32 +87,19 @@ namespace GaussBlur
                 && threadCount > 0 && threadCount <= 64;
         }
 
-        private bool checkKernelSize()
-        {
-            return int.TryParse(kernelSizeBox.Text, out kernelSize) &&
-                kernelSize > 0 && kernelSize % 2 == 1;
-        }
-
         private bool checkStdDev()
         {
-            return double.TryParse(stdDevBox.Text, out stdDev) && stdDev >= 0;
+            return double.TryParse(stdDevBox.Text, out stdDev) && stdDev > 0;
         }
         
         private void blurButton_Click(object sender, RoutedEventArgs e)
         {
-            string inpDir = inpFilenameBox.Text;
-            loadInpPreview();
-            if (inpDir != null && inpDir != "")
+            if (inpFileDir != null && inpFileDir != "")
             {   
                 if (!checkThreadCount())
                 {
                     // TODO
                     MessageBox.Show("Invalid thread count.");
-                }
-                else if (!checkKernelSize())
-                {
-                    // TODO
-                    MessageBox.Show("Invalid kernel size.");
                 }
                 else if (!checkStdDev())
                 {
@@ -123,12 +110,16 @@ namespace GaussBlur
                 {
                     try
                     {
-                        if (File.Exists(inpDir))
+                        if (inpFileDir == outFileDir)
                         {
-                            Bitmap image = new Bitmap(inpDir);
-                            
+                            MessageBox.Show("Input and output files cannot be the same.");
+                        }
+                        else if (File.Exists(inpFileDir))
+                        {
+                            loadInpPreview();
+
                             CBlurThreadFactory factory = new CBlurThreadFactory(threadCount);
-                            BlurTask blur = new BlurTask(factory, image, new GaussKernel(kernelSize, stdDev));
+                            BlurTask blur = new BlurTask(inpImageData, factory, stdDev);
                             Stopwatch sw = new Stopwatch();
 
                             sw.Start();
@@ -136,13 +127,18 @@ namespace GaussBlur
                             sw.Stop();
                             MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000.0 } seconds.");
 
-                            image.Save(outFileDir);
+                            unlockInpImage();
+
+                            FileStream outStream = File.Open(outFileDir, FileMode.OpenOrCreate);
+                            inpImage.Save(outStream, inpImage.RawFormat);
+                            outStream.Close();
+                            inpImage.Dispose();
 
                             loadOutPreview();
                         }
                         else
                         {
-                            Debug.WriteLine($"Cannot open file: {inpDir}.");
+                            Debug.WriteLine($"Cannot open file: {inpFileDir}.");
                         }
                     }
                     catch (UriFormatException exc)
@@ -160,6 +156,11 @@ namespace GaussBlur
                 System.Drawing.Imaging.ImageLockMode.ReadWrite,
                 inpImage.PixelFormat);
         }
+
+        private void unlockInpImage()
+        {
+            inpImage.UnlockBits(inpImageData);
+        }
         
         private void loadInpPreview()
         {
@@ -167,12 +168,12 @@ namespace GaussBlur
             {
                 if (File.Exists(inpFileDir))
                 {
-                    if (inpStream != null && (inpStream.CanRead || inpStream.CanWrite))
+                    if (inpStream != null && inpStream.CanRead)
                     {
                         inpStream.Close();
                     }
 
-                    inpStream = File.Open(inpFileDir, FileMode.Open); ;
+                    inpStream = File.Open(inpFileDir, FileMode.Open);
                     //inpImagePreview.Source = new BitmapImage(new Uri(inpFileDir));
                     inpImage = new Bitmap(inpStream);
                     lockInpImage();
@@ -183,6 +184,7 @@ namespace GaussBlur
                         System.Windows.Media.PixelFormats.Bgr24, null,
                         inpImageData.Scan0, inpImageData.Stride * inpImageData.Height,
                         inpImageData.Stride);
+
                 }
             }
             catch (UriFormatException exc)
@@ -195,12 +197,25 @@ namespace GaussBlur
         {
             try
             {
-                if (File.Exists(outFileDir))
-                {
-                    outImagePreview.Source = new BitmapImage(new Uri(outFileDir));
-                }
+                FileStream outStream = File.Open(outFileDir, FileMode.OpenOrCreate);
+                Bitmap outImage = new Bitmap(outStream);
+                System.Drawing.Imaging.BitmapData outData = outImage.LockBits(
+                    new Rectangle(0, 0, outImage.Width, outImage.Height),
+                    System.Drawing.Imaging.ImageLockMode.ReadOnly,
+                    outImage.PixelFormat);
+
+                outImagePreview.Source = BitmapSource.Create(
+                    outData.Width, outData.Height,
+                    outImage.HorizontalResolution, outImage.VerticalResolution,
+                    System.Windows.Media.PixelFormats.Bgr24, null,
+                    outData.Scan0, outData.Stride * outData.Height,
+                    outData.Stride);
+
+                outImage.UnlockBits(outData);
+                outStream.Close();
+                outImage.Dispose();
             }
-            catch (UriFormatException exc)
+            catch (FileNotFoundException exc)
             {
                 Debug.WriteLine($"Cannot open file: {exc.Data}.");
             }

@@ -10,13 +10,13 @@ namespace GaussBlur
             base(threadCount)
         { }
 
-        public override BlurThread CreateThread(double* dataP,
-            double* helperP, int startPos, int endPos, int imageStride,
-            int imageHeight, double* kernelP, int kernSize)
+        public override BlurThread CreateThread(byte* dataP,
+            byte* helperP, int startPos, int endPos, int imageStride,
+            int imageHeight, double* kernelP)
         {   
             BlurThread newItem = new CBlurThread(this, dataP, helperP,
                 startPos, endPos, imageStride,
-                imageHeight, kernelP, kernSize);
+                imageHeight, kernelP);
 
             Items.Add(newItem);
 

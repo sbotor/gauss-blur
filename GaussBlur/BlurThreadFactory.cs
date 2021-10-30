@@ -20,8 +20,8 @@ namespace GaussBlur
             ThreadCount = threadCount;
         }
         
-        public unsafe abstract BlurThread CreateThread(double* dataP,
-            double* helperP, int startPos, int endPos, int imageStride,
-            int imageHeight, double* kernelP, int kernSize);
+        public unsafe abstract BlurThread CreateThread(byte* dataP,
+            byte* helperP, int startPos, int endPos, int imageStride,
+            int imageHeight, double* kernelP);
     }
 }

@@ -10,63 +10,70 @@ namespace GaussBlur
 {
     class BlurTask
     {
-        public BlurThreadFactory Factory
-        { get; private set; }
+        public BlurThreadFactory Factory { get; private set; }
 
-        public Bitmap Image
-        { get; private set; }
+        public double[] Kernel { get; private set; }
 
-        public GaussKernel Kernel
-        { get; private set; }
+        public System.Drawing.Imaging.BitmapData imageData { get; private set; }
 
-        public BlurTask(BlurThreadFactory factory, Bitmap image, GaussKernel kernel)
+        public BlurTask(System.Drawing.Imaging.BitmapData data, BlurThreadFactory factory, double kernelSD)
         {
             Factory = factory;
-            Image = image;
-            Kernel = kernel;
+            imageData = data;
+            createKernel(kernelSD);
+        }
+
+        private void createKernel(double sd)
+        {
+            Kernel = new double[5];
+
+            double variance = sd * sd,
+                constance = 1 / (Math.Sqrt(2.0 * Math.PI) * sd);
+
+            Kernel[0] = constance * Math.Exp(-2 / variance);
+            Kernel[1] = constance * Math.Exp(-0.5 / variance);
+            Kernel[2] = constance;
+
+            double kernelSum = Kernel[0] * 2 + Kernel[1] * 2 + Kernel[2];
+
+            Kernel[0] = Kernel[4] = Kernel[0] / kernelSum;
+            Kernel[1] = Kernel[3] = Kernel[1] / kernelSum;
+            Kernel[2] = Kernel[2] / kernelSum;
         }
 
         public void Blur()
         {
-            System.Drawing.Rectangle rect = new System.Drawing.Rectangle(0, 0, Image.Width, Image.Height);
-            System.Drawing.Imaging.BitmapData imageData =
-                Image.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite,
-                Image.PixelFormat);
-
             RGBArray rgbArray = new RGBArray(imageData);
             int[] slices = rgbArray.Slice(Factory.ThreadCount);
-            double[] helperArray = new double[rgbArray.Length];
+            byte[] helperArray = new byte[rgbArray.Length];
             
             unsafe
             {
-                fixed (double* dataP = rgbArray.Data,
-                    helperP = helperArray,
-                    kernelP = Kernel.Data)
+                fixed (byte* helperP = helperArray)
                 {
-                    for (int i = 0; i < Factory.ThreadCount; i++)
+                    fixed (double* kernelP = Kernel)
                     {
-                        BlurThread thread = Factory.CreateThread(
-                            dataP,
-                            helperP,
-                            slices[i],
-                            slices[i + 1],
-                            rgbArray.Stride,
-                            rgbArray.Height,
-                            kernelP,
-                            Kernel.Size);
+                        for (int i = 0; i < Factory.ThreadCount; i++)
+                        {
+                            BlurThread thread = Factory.CreateThread(
+                                rgbArray.Data,
+                                helperP,
+                                slices[i],
+                                slices[i + 1],
+                                rgbArray.Stride,
+                                rgbArray.Height,
+                                kernelP);
 
-                        thread.Start();
-                    }
+                            thread.Start();
+                        }
 
-                    for (int i = 0; i < Factory.ThreadCount; i++)
-                    {
-                        Factory.Items[i].Join();
+                        for (int i = 0; i < Factory.ThreadCount; i++)
+                        {
+                            Factory.Items[i].Join();
+                        }
                     }
                 }
             }
-
-            Marshal.Copy(rgbArray.ToByteArray(), 0, imageData.Scan0, rgbArray.Length);
-            Image.UnlockBits(imageData);
         }
     }
 }

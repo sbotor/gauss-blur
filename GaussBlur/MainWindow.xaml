@@ -200,20 +200,6 @@
 
                     <Border Style="{StaticResource BorderStyle}">
                         <WrapPanel>
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <Label Content="Kernel size"
-                                       Style="{StaticResource LabelStyle}"/>
-                                <TextBox x:Name="kernelSizeBox"
-                                         Grid.Column="1"
-                                         Style="{StaticResource NumBoxStyle}"
-                                         PreviewTextInput="numBox_PreviewTextInput"
-                                         DataObject.Pasting="numBox_Pasting"/>
-                            </Grid>
 
                             <Grid>
                                 <Grid.ColumnDefinitions>
