@@ -199,7 +199,7 @@
                     </Border>
 
                     <Border Style="{StaticResource BorderStyle}">
-                        <WrapPanel>
+                        <StackPanel>
 
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -215,7 +215,27 @@
                                          PreviewTextInput="numBox_PreviewTextInput"
                                          DataObject.Pasting="numBox_Pasting"/>
                             </Grid>
-                        </WrapPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource BorderStyle}">
+                        <StackPanel>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <Label Content="Repeats"
+                                       Style="{StaticResource LabelStyle}"/>
+                                <TextBox x:Name="repeatCountBox"
+                                         Grid.Column="1"
+                                         Style="{StaticResource NumBoxStyle}"
+                                         PreviewTextInput="numBox_PreviewTextInput"
+                                         DataObject.Pasting="numBox_Pasting"/>
+                            </Grid>
+                        </StackPanel>
                     </Border>
                 </WrapPanel>
 

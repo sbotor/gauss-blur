@@ -23,5 +23,11 @@ namespace GaussBlur
         public unsafe abstract BlurThread CreateThread(byte* dataP,
             byte* helperP, int startPos, int endPos, int imageStride,
             int imageHeight, double* kernelP);
+
+        public void Clear()
+        {
+            BlurXFinished.Reset();
+            Items.Clear();
+        }
     }
 }

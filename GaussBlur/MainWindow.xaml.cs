@@ -17,8 +17,9 @@ namespace GaussBlur
     /// </summary>
     public partial class MainWindow : Window
     {
-        private static double stdDev = 16;
-        private static int threadCount = 12;
+        private double stdDev = 16;
+        private int threadCount = 16;
+        private int repeatCount = 1;
 
         private static string inpFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\aei.jpg";
 
@@ -26,7 +27,7 @@ namespace GaussBlur
         
         private static Regex numRegex = new Regex(@"[0-9.]+");
 
-        private FileStream inpStream;
+        private MemoryStream inpStream;
         private Bitmap inpImage;
         private System.Drawing.Imaging.BitmapData inpImageData;
 
@@ -41,13 +42,14 @@ namespace GaussBlur
 
             threadCountBox.Text = threadCount.ToString();
             stdDevBox.Text = stdDev.ToString();
+            repeatCountBox.Text = repeatCount.ToString();
 
             Debug.WriteLine("Started.");
         }
 
         ~MainWindow()
         {
-            if (inpStream.CanRead || inpStream.CanWrite)
+            if (inpStream.CanRead)
             {
                 inpStream.Close();
             }
@@ -91,6 +93,12 @@ namespace GaussBlur
         {
             return double.TryParse(stdDevBox.Text, out stdDev) && stdDev > 0;
         }
+
+        private bool checkRepeatCount()
+        {
+            return int.TryParse(repeatCountBox.Text, out repeatCount)
+                && repeatCount > 0 && repeatCount <= 64;
+        }
         
         private void blurButton_Click(object sender, RoutedEventArgs e)
         {
@@ -105,6 +113,11 @@ namespace GaussBlur
                 {
                     // TODO
                     MessageBox.Show("Invalid standard deviation.");
+                }
+                else if (!checkRepeatCount())
+                {
+                    // TODO
+                    MessageBox.Show("Invalid repeat count.");
                 }
                 else
                 {
@@ -123,7 +136,7 @@ namespace GaussBlur
                             Stopwatch sw = new Stopwatch();
 
                             sw.Start();
-                            blur.Blur();
+                            blur.Blur(repeatCount);
                             sw.Stop();
                             MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000.0 } seconds.");
 
@@ -173,7 +186,12 @@ namespace GaussBlur
                         inpStream.Close();
                     }
 
-                    inpStream = File.Open(inpFileDir, FileMode.Open);
+                    inpStream = new MemoryStream();
+
+                    using (FileStream ms = File.Open(inpFileDir, FileMode.Open))
+                    {
+                        ms.CopyTo(inpStream);
+                    }
                     //inpImagePreview.Source = new BitmapImage(new Uri(inpFileDir));
                     inpImage = new Bitmap(inpStream);
                     lockInpImage();

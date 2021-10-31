@@ -41,35 +41,44 @@ namespace GaussBlur
             Kernel[2] = Kernel[2] / kernelSum;
         }
 
-        public void Blur()
+        private unsafe void blurInThreads(RGBArray rgbArray, byte* helperP, int[] slices, double* kernelP)
+        {
+            for (int i = 0; i < Factory.ThreadCount; i++)
+            {
+                BlurThread thread = Factory.CreateThread(
+                    rgbArray.Data,
+                    helperP,
+                    slices[i],
+                    slices[i + 1],
+                    rgbArray.Stride,
+                    rgbArray.Height,
+                    kernelP);
+
+                thread.Start();
+            }
+
+            for (int i = 0; i < Factory.ThreadCount; i++)
+            {
+                Factory.Items[i].Join();
+            }
+        }
+
+        public void Blur(int repeat = 1)
         {
             RGBArray rgbArray = new RGBArray(imageData);
             int[] slices = rgbArray.Slice(Factory.ThreadCount);
             byte[] helperArray = new byte[rgbArray.Length];
-            
+
             unsafe
             {
                 fixed (byte* helperP = helperArray)
                 {
                     fixed (double* kernelP = Kernel)
                     {
-                        for (int i = 0; i < Factory.ThreadCount; i++)
+                        for (int i = 0; i < repeat; i++)
                         {
-                            BlurThread thread = Factory.CreateThread(
-                                rgbArray.Data,
-                                helperP,
-                                slices[i],
-                                slices[i + 1],
-                                rgbArray.Stride,
-                                rgbArray.Height,
-                                kernelP);
-
-                            thread.Start();
-                        }
-
-                        for (int i = 0; i < Factory.ThreadCount; i++)
-                        {
-                            Factory.Items[i].Join();
+                            Factory.Clear();
+                            blurInThreads(rgbArray, helperP, slices, kernelP);
                         }
                     }
                 }
