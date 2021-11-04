@@ -129,25 +129,41 @@ namespace GaussBlur
                         }
                         else if (File.Exists(inpFileDir))
                         {
-                            loadInpPreview();
+                            if (useCRadio.IsChecked is bool checkedC && checkedC == true)
+                            {
+                                loadInpPreview();
+                                CBlurThreadFactory factory = new CBlurThreadFactory(threadCount);
+                                BlurTask blur = new BlurTask(inpImageData, factory, stdDev);
+                                Stopwatch sw = new Stopwatch();
 
-                            CBlurThreadFactory factory = new CBlurThreadFactory(threadCount);
-                            BlurTask blur = new BlurTask(inpImageData, factory, stdDev);
-                            Stopwatch sw = new Stopwatch();
+                                sw.Start();
+                                blur.Blur(repeatCount);
+                                sw.Stop();
+                                MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000.0 } seconds.");
 
-                            sw.Start();
-                            blur.Blur(repeatCount);
-                            sw.Stop();
-                            MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000.0 } seconds.");
+                                unlockInpImage();
 
-                            unlockInpImage();
+                                FileStream outStream = File.Open(outFileDir, FileMode.OpenOrCreate);
+                                inpImage.Save(outStream, inpImage.RawFormat);
+                                outStream.Close();
+                                inpImage.Dispose();
 
-                            FileStream outStream = File.Open(outFileDir, FileMode.OpenOrCreate);
-                            inpImage.Save(outStream, inpImage.RawFormat);
-                            outStream.Close();
-                            inpImage.Dispose();
+                                loadOutPreview();
+                            }
+                            else if (useAsmRadio.IsChecked is bool checkedAsm && checkedAsm == true)
+                            {
+                                //double[] first = new double[] { 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8 },
+                                //    second = new double[] { 2d, 2d, 2d, 0.5d, 2d, 0.5d, 2d, 1d };
 
-                            loadOutPreview();
+                                double[] first = new double[] { 1.1, 2.2, 3.3, 4.4 },
+                                    second = new double[] { 2d, 1d, 2d, 0.5d };
+
+                                AsmLib.safeTestSIMD(first, second);
+                            }
+                            else
+                            {
+                                MessageBox.Show("Choose a library before starting.");
+                            }
                         }
                         else
                         {
