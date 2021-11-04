@@ -155,10 +155,19 @@ namespace GaussBlur
                                 //double[] first = new double[] { 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8 },
                                 //    second = new double[] { 2d, 2d, 2d, 0.5d, 2d, 0.5d, 2d, 1d };
 
-                                double[] first = new double[] { 1.1, 2.2, 3.3, 4.4 },
-                                    second = new double[] { 2d, 1d, 2d, 0.5d };
+                                double[] firstD = new double[] { 1.1, 2.2, 3.3, 4.4 },
+                                    secondD = new double[] { 2d, 1d, 2d, 0.5d };
 
-                                AsmLib.safeTestSIMD(first, second);
+                                AsmLib.safeTestSIMD(firstD, secondD);
+
+                                byte[] dataB = new byte[5],
+                                    helperB = new byte[5];
+                                int start = 1,
+                                    end = 2,
+                                    stride = 3,
+                                    height = 4;
+
+                                AsmLib.safeTestParams(dataB, helperB, start, end, stride, height, firstD);
                             }
                             else
                             {
