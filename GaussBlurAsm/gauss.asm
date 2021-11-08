@@ -39,9 +39,8 @@ ret
 init ENDP
 
 testParams PROC
-	.DATA
-	startPos DQ 0
-	endPos DQ 0
+	LOCAL startPos : DQ
+	LOCAL endPos : DQ
 	
 	.CODE
 	MOV startPos, RCX

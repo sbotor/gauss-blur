@@ -142,7 +142,8 @@
                     <Button x:Name="browseInpButton"
                             Content="Browse"
                             Grid.Column="2"
-                            Style="{StaticResource ButtonStyle}"/>
+                            Style="{StaticResource ButtonStyle}"
+                            Click="browseInpButton_Click"/>
 
                     <Label Content="Output"
                             Grid.Row="1"
@@ -156,7 +157,8 @@
                             Content="Browse"
                             Grid.Row="1"
                             Grid.Column="3"
-                            Style="{StaticResource ButtonStyle}"/>
+                            Style="{StaticResource ButtonStyle}"
+                            Click="browseOutButton_Click"/>
                 </Grid>
             </Border>
 

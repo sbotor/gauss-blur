@@ -9,6 +9,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
+using Microsoft.Win32;
 
 namespace GaussBlur
 {
@@ -58,6 +59,7 @@ namespace GaussBlur
         private void inpFilenameBox_LostFocus(object sender, RoutedEventArgs e)
         {
             inpFileDir = inpFilenameBox.Text;
+
             if (inpFileDir != null && inpFileDir != "")
             {
                 try
@@ -102,6 +104,9 @@ namespace GaussBlur
         
         private void blurButton_Click(object sender, RoutedEventArgs e)
         {
+            inpFileDir = inpFilenameBox.Text;
+            outFileDir = outFilenameBox.Text;
+
             if (inpFileDir != null && inpFileDir != "")
             {   
                 if (!checkThreadCount())
@@ -202,6 +207,8 @@ namespace GaussBlur
         
         private void loadInpPreview()
         {
+            inpFileDir = inpFilenameBox.Text;
+            
             try
             {
                 if (File.Exists(inpFileDir))
@@ -238,9 +245,11 @@ namespace GaussBlur
         
         private void loadOutPreview()
         {
+            outFileDir = outFilenameBox.Text;
+            
             try
             {
-                FileStream outStream = File.Open(outFileDir, FileMode.OpenOrCreate);
+                FileStream outStream = File.Open(outFileDir, FileMode.Open);
                 Bitmap outImage = new Bitmap(outStream);
                 System.Drawing.Imaging.BitmapData outData = outImage.LockBits(
                     new Rectangle(0, 0, outImage.Width, outImage.Height),
@@ -282,6 +291,31 @@ namespace GaussBlur
             else
             {
                 e.CancelCommand();
+            }
+        }
+
+        private void browseInpButton_Click(object sender, RoutedEventArgs e)
+        {
+            OpenFileDialog fileDialog = new OpenFileDialog();
+            fileDialog.Filter = "Image files|*.jpg;*.png;*.bmp";
+
+            if (fileDialog.ShowDialog() == true)
+            {
+                inpFilenameBox.Text = fileDialog.FileName;
+                loadInpPreview();
+            }
+        }
+
+        private void browseOutButton_Click(object sender, RoutedEventArgs e)
+        {
+            SaveFileDialog fileDialog = new SaveFileDialog();
+            fileDialog.Filter = "Image file|*.jpg|" +
+                "Image file|*.png|" +
+                "Bitmap file|*.bmp";
+            
+            if (fileDialog.ShowDialog() == true)
+            {
+                outFilenameBox.Text = fileDialog.FileName;
             }
         }
     }
