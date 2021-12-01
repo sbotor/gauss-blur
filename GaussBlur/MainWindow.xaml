@@ -68,7 +68,7 @@
                TargetType="Image">
             <Setter Property="Margin" Value="5"/>
             <Setter Property="Stretch" Value="Uniform"/>
-            <Setter Property="StretchDirection" Value="DownOnly"/>
+            <Setter Property="StretchDirection" Value="Both"/>
         </Style>
 
     </Window.Resources>

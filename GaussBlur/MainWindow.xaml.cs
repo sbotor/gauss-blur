@@ -85,104 +85,115 @@ namespace GaussBlur
             outFileDir = outFilenameBox.Text;
         }
 
-        private bool checkThreadCount()
+        private bool checkParams()
         {
-            return int.TryParse(threadCountBox.Text, out threadCount)
-                && threadCount > 0 && threadCount <= 64;
+            if (!int.TryParse(threadCountBox.Text, out threadCount)
+                && threadCount > 0 && threadCount <= 64)
+                {
+                MessageBox.Show("Invalid thread count.");
+                return false;
+            }
+
+
+            if (!double.TryParse(stdDevBox.Text, out stdDev) && stdDev > 0)
+            {
+                MessageBox.Show("Invalid standard deviation.");
+                return false;
+            }
+
+            if (!int.TryParse(repeatCountBox.Text, out repeatCount)
+                && repeatCount > 0 && repeatCount <= 64)
+            {
+                MessageBox.Show("Invalid repeat count.");
+                return false;
+            }
+
+            return true;
         }
 
-        private bool checkStdDev()
+        private bool checkInputFile()
         {
-            return double.TryParse(stdDevBox.Text, out stdDev) && stdDev > 0;
+            if (inpFileDir != null && inpFileDir != "")
+            {
+                if (File.Exists(inpFileDir))
+                {
+                    return true;
+                }
+                else
+                {
+                    MessageBox.Show($"Cannot open input file {inpFileDir}.");
+                }
+            }
+
+            return false;
         }
 
-        private bool checkRepeatCount()
+        private void processImage(IThreadFactory factory)
         {
-            return int.TryParse(repeatCountBox.Text, out repeatCount)
-                && repeatCount > 0 && repeatCount <= 64;
+            loadInpPreview();
+            BlurTask blurTask = new BlurTask(inpImageData, threadCount, stdDev, repeatCount);
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
+            blurTask.RunThreads(factory);
+            sw.Stop();
+            MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000.0 } seconds.");
+
+            unlockInpImage();
+
+            FileStream outStream = File.Open(outFileDir, FileMode.OpenOrCreate);
+            inpImage.Save(outStream, inpImage.RawFormat);
+            outStream.Close();
+            inpImage.Dispose();
+
+            loadOutPreview();
         }
-        
+
         private void blurButton_Click(object sender, RoutedEventArgs e)
         {
             inpFileDir = inpFilenameBox.Text;
             outFileDir = outFilenameBox.Text;
 
-            if (inpFileDir != null && inpFileDir != "")
+            if (checkInputFile())
             {   
-                if (!checkThreadCount())
-                {
-                    // TODO
-                    MessageBox.Show("Invalid thread count.");
-                }
-                else if (!checkStdDev())
-                {
-                    // TODO
-                    MessageBox.Show("Invalid standard deviation.");
-                }
-                else if (!checkRepeatCount())
-                {
-                    // TODO
-                    MessageBox.Show("Invalid repeat count.");
-                }
-                else
+                if (checkParams())
                 {
                     try
                     {
-                        if (inpFileDir == outFileDir)
+                        IThreadFactory factory = null;
+
+                        if (useCRadio.IsChecked is bool checkedC && checkedC)
                         {
-                            MessageBox.Show("Input and output files cannot be the same.");
+                            factory = new CThreadFactory();
                         }
-                        else if (File.Exists(inpFileDir))
+                        else if (useAsmRadio.IsChecked is bool checkedAsm && checkedAsm)
                         {
-                            if (useCRadio.IsChecked is bool checkedC && checkedC == true)
-                            {
-                                loadInpPreview();
-                                CBlurThreadFactory factory = new CBlurThreadFactory(threadCount);
-                                BlurTask blur = new BlurTask(inpImageData, factory, stdDev);
-                                Stopwatch sw = new Stopwatch();
+                            //double[] first = new double[] { 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8 },
+                            //    second = new double[] { 2d, 2d, 2d, 0.5d, 2d, 0.5d, 2d, 1d };
 
-                                sw.Start();
-                                blur.Blur(repeatCount);
-                                sw.Stop();
-                                MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000.0 } seconds.");
+                            double[] firstD = new double[] { 1.1, 2.2, 3.3, 4.4 },
+                                secondD = new double[] { 2d, 1d, 2d, 0.5d };
 
-                                unlockInpImage();
+                            AsmLib.safeTestSIMD(firstD, secondD);
 
-                                FileStream outStream = File.Open(outFileDir, FileMode.OpenOrCreate);
-                                inpImage.Save(outStream, inpImage.RawFormat);
-                                outStream.Close();
-                                inpImage.Dispose();
+                            byte[] dataB = new byte[5],
+                                helperB = new byte[5];
+                            int start = 1,
+                                end = 2,
+                                stride = 3,
+                                height = 4;
 
-                                loadOutPreview();
-                            }
-                            else if (useAsmRadio.IsChecked is bool checkedAsm && checkedAsm == true)
-                            {
-                                //double[] first = new double[] { 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8 },
-                                //    second = new double[] { 2d, 2d, 2d, 0.5d, 2d, 0.5d, 2d, 1d };
+                            AsmLib.safeTestParams(dataB, helperB, start, end, stride, height, firstD);
 
-                                double[] firstD = new double[] { 1.1, 2.2, 3.3, 4.4 },
-                                    secondD = new double[] { 2d, 1d, 2d, 0.5d };
-
-                                AsmLib.safeTestSIMD(firstD, secondD);
-
-                                byte[] dataB = new byte[5],
-                                    helperB = new byte[5];
-                                int start = 1,
-                                    end = 2,
-                                    stride = 3,
-                                    height = 4;
-
-                                AsmLib.safeTestParams(dataB, helperB, start, end, stride, height, firstD);
-                            }
-                            else
-                            {
-                                MessageBox.Show("Choose a library before starting.");
-                            }
+                            return;
                         }
                         else
                         {
-                            Debug.WriteLine($"Cannot open file: {inpFileDir}.");
+                            MessageBox.Show("Choose a library before starting.");
+                            return;
                         }
+
+                        processImage(factory);
                     }
                     catch (UriFormatException exc)
                     {

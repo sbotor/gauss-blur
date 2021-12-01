@@ -1,85 +1,71 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
-using System.IO;
-using System.Text;
-using System.Threading;
-using System.Runtime.InteropServices;
 
 namespace GaussBlur
 {
-    class BlurTask
+    class BlurTask : BlurThreadSynchronizer
     {
-        public BlurThreadFactory Factory { get; private set; }
-
+        public List<BlurThread> Threads { get; private set; }
+        
         public double[] Kernel { get; private set; }
 
-        public System.Drawing.Imaging.BitmapData imageData { get; private set; }
+        public ImageData Data { get; private set; }
 
-        public BlurTask(System.Drawing.Imaging.BitmapData data, BlurThreadFactory factory, double kernelSD)
+        public BlurTask(System.Drawing.Imaging.BitmapData data, int threadCount, double kernelSD, int repeats)
+            : base(threadCount, repeats)
         {
-            Factory = factory;
-            imageData = data;
-            createKernel(kernelSD);
+            Data = new ImageData(data);
+            Kernel = CreateKernel(kernelSD);
+
+            Threads = new List<BlurThread>();
+        }
+        
+        public void Clear()
+        {
+            Reset();
+            Threads.Clear();
         }
 
-        private void createKernel(double sd)
+        public static double[] CreateKernel(double sd)
         {
-            Kernel = new double[5];
+            double[] kernel = new double[5];
 
             double variance = sd * sd,
                 constance = 1 / (Math.Sqrt(2.0 * Math.PI) * sd);
 
-            Kernel[0] = constance * Math.Exp(-2 / variance);
-            Kernel[1] = constance * Math.Exp(-0.5 / variance);
-            Kernel[2] = constance;
+            kernel[0] = constance * Math.Exp(-2 / variance);
+            kernel[1] = constance * Math.Exp(-0.5 / variance);
+            kernel[2] = constance;
 
-            double kernelSum = Kernel[0] * 2 + Kernel[1] * 2 + Kernel[2];
+            double kernelSum = kernel[0] * 2 + kernel[1] * 2 + kernel[2];
 
-            Kernel[0] = Kernel[4] = Kernel[0] / kernelSum;
-            Kernel[1] = Kernel[3] = Kernel[1] / kernelSum;
-            Kernel[2] = Kernel[2] / kernelSum;
+            kernel[0] = kernel[4] = kernel[0] / kernelSum;
+            kernel[1] = kernel[3] = kernel[1] / kernelSum;
+            kernel[2] = kernel[2] / kernelSum;
+
+            return kernel;
         }
 
-        private unsafe void blurInThreads(RGBArray rgbArray, byte* helperP, int[] slices, double* kernelP)
+        public void RunThreads(IThreadFactory factory)
         {
-            for (int i = 0; i < Factory.ThreadCount; i++)
-            {
-                BlurThread thread = Factory.CreateThread(
-                    rgbArray.Data,
-                    helperP,
-                    slices[i],
-                    slices[i + 1],
-                    rgbArray.Stride,
-                    rgbArray.Height,
-                    kernelP);
-
-                thread.Start();
-            }
-
-            for (int i = 0; i < Factory.ThreadCount; i++)
-            {
-                Factory.Items[i].Join();
-            }
-        }
-
-        public void Blur(int repeat = 1)
-        {
-            RGBArray rgbArray = new RGBArray(imageData);
-            int[] slices = rgbArray.Slice(Factory.ThreadCount);
-            byte[] helperArray = new byte[rgbArray.Length];
-
             unsafe
             {
-                fixed (byte* helperP = helperArray)
+                fixed(double* kernelP = Kernel)
                 {
-                    fixed (double* kernelP = Kernel)
+                    Clear();
+                    int[] slices = Data.Slice(ThreadCount);
+                    byte[] helper = new byte[Data.Length];
+
+                    fixed (byte* helperP = helper)
                     {
-                        for (int i = 0; i < repeat; i++)
+                        for (int i = 0; i < ThreadCount; i++)
                         {
-                            Factory.Clear();
-                            blurInThreads(rgbArray, helperP, slices, kernelP);
+                            BlurThread thread = factory.Create(this, helperP, kernelP, slices[i], slices[i + 1]);
+                            Threads.Add(thread);
+                            thread.Start();
                         }
+
+                        Threads.ForEach((t) => t.Join());
                     }
                 }
             }

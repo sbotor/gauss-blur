@@ -35,7 +35,7 @@ init PROC
 	MOV RCX, [RSP+40]
 	MOV kernelArray, RCX
 
-ret
+	ret
 init ENDP
 
 testParams PROC

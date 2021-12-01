@@ -5,45 +5,29 @@ using System.Threading;
 
 namespace GaussBlur
 {
-    abstract unsafe class BlurThread
+    abstract class BlurThread
     {
-        protected readonly byte* data;
-        protected readonly byte* helper;
-        protected readonly int start;
-        protected readonly int end;
-        protected readonly int stride;
-        protected readonly int height;
-        protected readonly double* kernel;
+        public int StartPos { get; private set; }
 
-        protected readonly BlurThreadFactory parentFactory;
-        protected readonly Thread thread;
+        public int EndPos { get; private set; }
+        
+        public Thread CurrentThread { get; private set; }
 
-        protected BlurThread(BlurThreadFactory parent, byte* dataP,
-            byte* helperP, int startPos, int endPos, int imageStride,
-            int imageHeight, double* kernelP)
+        public BlurTask Task { get; private set; }
+        
+        public BlurThread(BlurTask task, int start, int end)
         {
-            parentFactory = parent;
-            data = dataP;
-            helper = helperP;
-            stride = imageStride;
-            height = imageHeight;
-            kernel = kernelP;
-            start = startPos;
-            end = endPos;
+            StartPos = start;
+            EndPos = end;
+            Task = task;
 
-            thread = new Thread(Run);
+            CurrentThread = new Thread(Run);
         }
 
-        public abstract void Run();
+        protected abstract void Run();
 
-        public void Start()
-        {
-            thread.Start();
-        }
+        public abstract void Start();
 
-        public void Join()
-        {
-            thread.Join();
-        }
+        public abstract void Join();
     }
 }
