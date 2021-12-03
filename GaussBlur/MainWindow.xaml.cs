@@ -22,15 +22,15 @@ namespace GaussBlur
         private int threadCount = 16;
         private int repeatCount = 1;
 
-        private static string inpFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\aei.jpg";
+        private static string inpFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\medic.jpg";
 
         private static string outFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
         
         private static Regex numRegex = new Regex(@"[0-9.]+");
 
-        private MemoryStream inpStream;
-        private Bitmap inpImage;
-        private System.Drawing.Imaging.BitmapData inpImageData;
+        private MemoryStream? inpStream;
+        private Bitmap? inpImage;
+        private System.Drawing.Imaging.BitmapData? inpImageData;
 
         //private FileStream outStream;
 
@@ -41,6 +41,8 @@ namespace GaussBlur
             inpFilenameBox.Text = inpFileDir;
             outFilenameBox.Text = outFileDir;
 
+            useCRadio.IsChecked = true;
+
             threadCountBox.Text = threadCount.ToString();
             stdDevBox.Text = stdDev.ToString();
             repeatCountBox.Text = repeatCount.ToString();
@@ -50,7 +52,17 @@ namespace GaussBlur
 
         ~MainWindow()
         {
-            if (inpStream.CanRead)
+            if (inpImageData != null)
+            {
+                unlockInpImage();
+            }
+
+            if (inpImage != null)
+            {
+                inpImage.Dispose();
+            }
+
+            if (inpStream != null && inpStream.CanRead)
             {
                 inpStream.Close();
             }
@@ -214,6 +226,7 @@ namespace GaussBlur
         private void unlockInpImage()
         {
             inpImage.UnlockBits(inpImageData);
+            inpImageData = null;
         }
         
         private void loadInpPreview()
@@ -236,6 +249,17 @@ namespace GaussBlur
                         ms.CopyTo(inpStream);
                     }
                     //inpImagePreview.Source = new BitmapImage(new Uri(inpFileDir));
+                    
+                    if (inpImageData != null)
+                    {
+                        unlockInpImage();
+                    }
+                    
+                    if (inpImage != null)
+                    {
+                        inpImage.Dispose();
+                    }
+
                     inpImage = new Bitmap(inpStream);
                     lockInpImage();
 
@@ -262,6 +286,7 @@ namespace GaussBlur
             {
                 FileStream outStream = File.Open(outFileDir, FileMode.Open);
                 Bitmap outImage = new Bitmap(outStream);
+                
                 System.Drawing.Imaging.BitmapData outData = outImage.LockBits(
                     new Rectangle(0, 0, outImage.Width, outImage.Height),
                     System.Drawing.Imaging.ImageLockMode.ReadOnly,
