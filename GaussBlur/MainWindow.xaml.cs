@@ -20,17 +20,17 @@ namespace GaussBlur
         private int threadCount = 16;
         private int repeatCount = 1;
 
-        private static string inpFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\aei.jpg";
+        private const string inpFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\aei.jpg";
 
-        private static string outFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
+        private const string outFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
         
         private static Regex numRegex = new Regex(@"[0-9.]+");
 
-        private MemoryStream? inpStream;
-        private Bitmap? inpImage;
-        private System.Drawing.Imaging.BitmapData? inpImageData;
+        //private MemoryStream? inpStream;
+        //private Bitmap? inpImage;
+        //private System.Drawing.Imaging.BitmapData? inpImageData;
 
-        //private FileStream outStream;
+        private ImageContainer inputImage;
 
         public MainWindow()
         {
@@ -41,58 +41,38 @@ namespace GaussBlur
 
             useCRadio.IsChecked = true;
 
-            threadCountBox.Text = threadCount.ToString();
-            stdDevBox.Text = stdDev.ToString();
+            inputImage = new ImageContainer();
+
+            threadCountBox.Text = stdDev.ToString();
+            stdDevBox.Text = threadCount.ToString();
             repeatCountBox.Text = repeatCount.ToString();
 
             Debug.WriteLine("Started.");
         }
-
-        ~MainWindow()
-        {
-            if (inpImageData != null)
-            {
-                unlockInpImage();
-            }
-
-            if (inpImage != null)
-            {
-                inpImage.Dispose();
-            }
-
-            if (inpStream != null && inpStream.CanRead)
-            {
-                inpStream.Close();
-            }
-        }
         
         private void inpFilenameBox_LostFocus(object sender, RoutedEventArgs e)
         {
-            inpFileDir = inpFilenameBox.Text;
-
-            if (inpFileDir != null && inpFileDir != "")
+            string newFileDir = inpFilenameBox.Text;
+            
+            if (newFileDir != null && newFileDir != "")
             {
                 try
                 {
-                    if (File.Exists(inpFileDir))
-                    {
-                        loadInpPreview();
-                    }
-                    else
-                    {
-                        Debug.WriteLine($"Cannot open file: {inpFileDir}.");
-                    }
+                    loadInpPreview(newFileDir);
                 }
-                catch (UriFormatException exc)
+                catch (FileNotFoundException)
                 {
-                    Debug.WriteLine($"Cannot open file: {exc.Data}.");
+                    return;
+                }
+                catch (UriFormatException)
+                {
+                    return;
+                }
+                catch (ArgumentException exc)
+                {
+                    MessageBox.Show(exc.Message);
                 }
             }
-        }
-
-        private void outFilenameBox_LostFocus(object sender, RoutedEventArgs e)
-        {
-            outFileDir = outFilenameBox.Text;
         }
 
         private bool checkParams()
@@ -121,189 +101,105 @@ namespace GaussBlur
             return true;
         }
 
-        private bool checkInputFile()
-        {
-            if (inpFileDir != null && inpFileDir != "")
-            {
-                if (File.Exists(inpFileDir))
-                {
-                    return true;
-                }
-                else
-                {
-                    MessageBox.Show($"Cannot open input file {inpFileDir}.");
-                }
-            }
-
-            return false;
-        }
-
         private void processImage(IThreadFactory factory)
         {
-            loadInpPreview();
-            BlurTask blurTask = new BlurTask(inpImageData, threadCount, stdDev, repeatCount);
-            Stopwatch sw = new Stopwatch();
+            inputImage.LockImage();
+            if (inputImage.ImageData != null)
+            {   
+                Stopwatch sw = new Stopwatch();
+                BlurTask blurTask = new BlurTask(inputImage.ImageData, threadCount, stdDev, repeatCount);
 
-            sw.Start();
-            blurTask.RunThreads(factory);
-            sw.Stop();
-            MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000.0 } seconds.");
+                sw.Start();
+                blurTask.RunThreads(factory);
+                sw.Stop();
 
-            unlockInpImage();
+                MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000.0 } seconds.");
+            }
+            inputImage.UnlockImage();
+        }
 
-            FileStream outStream = File.Open(outFileDir, FileMode.OpenOrCreate);
-            inpImage.Save(outStream, inpImage.RawFormat);
-            outStream.Close();
-            inpImage.Dispose();
+        private void testAsm()
+        {
+            //double[] first = new double[] { 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8 },
+            //    second = new double[] { 2d, 2d, 2d, 0.5d, 2d, 0.5d, 2d, 1d };
 
-            loadOutPreview();
+            double[] firstD = new double[] { 1.1, 2.2, 3.3, 4.4 },
+                secondD = new double[] { 2d, 1d, 2d, 0.5d };
+
+            AsmLib.safeTestSIMD(firstD, secondD);
+
+            byte[] dataB = new byte[5],
+                helperB = new byte[5];
+            int start = 1,
+                end = 2,
+                stride = 3,
+                height = 4;
+
+            AsmLib.safeTestParams(dataB, helperB, start, end, stride, height, firstD);
         }
 
         private void blurButton_Click(object sender, RoutedEventArgs e)
         {
-            inpFileDir = inpFilenameBox.Text;
-            outFileDir = outFilenameBox.Text;
+            string outDir = outFilenameBox.Text,
+                inpDir = inpFilenameBox.Text;
 
-            if (checkInputFile())
-            {   
-                if (checkParams())
-                {
-                    try
-                    {
-                        IThreadFactory factory = null;
-
-                        if (useCRadio.IsChecked is bool checkedC && checkedC)
-                        {
-                            factory = new CThreadFactory();
-                        }
-                        else if (useAsmRadio.IsChecked is bool checkedAsm && checkedAsm)
-                        {
-                            //double[] first = new double[] { 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8 },
-                            //    second = new double[] { 2d, 2d, 2d, 0.5d, 2d, 0.5d, 2d, 1d };
-
-                            double[] firstD = new double[] { 1.1, 2.2, 3.3, 4.4 },
-                                secondD = new double[] { 2d, 1d, 2d, 0.5d };
-
-                            AsmLib.safeTestSIMD(firstD, secondD);
-
-                            byte[] dataB = new byte[5],
-                                helperB = new byte[5];
-                            int start = 1,
-                                end = 2,
-                                stride = 3,
-                                height = 4;
-
-                            AsmLib.safeTestParams(dataB, helperB, start, end, stride, height, firstD);
-
-                            return;
-                        }
-                        else
-                        {
-                            MessageBox.Show("Choose a library before starting.");
-                            return;
-                        }
-
-                        processImage(factory);
-                    }
-                    catch (UriFormatException exc)
-                    {
-                        Debug.WriteLine($"Cannot open file: {exc.Data}.");
-                    }
-                }
-            }
-        }
-
-        private void lockInpImage()
-        {
-            inpImageData = inpImage.LockBits(
-                new Rectangle(0, 0, inpImage.Width, inpImage.Height),
-                System.Drawing.Imaging.ImageLockMode.ReadWrite,
-                inpImage.PixelFormat);
-        }
-
-        private void unlockInpImage()
-        {
-            inpImage.UnlockBits(inpImageData);
-            inpImageData = null;
-        }
-        
-        private void loadInpPreview()
-        {
-            inpFileDir = inpFilenameBox.Text;
-            
             try
             {
-                if (File.Exists(inpFileDir))
+                loadInpPreview(inpDir);
+
+                if (checkParams())
                 {
-                    if (inpStream != null && inpStream.CanRead)
+                    IThreadFactory factory = null;
+
+                    if (useCRadio.IsChecked is bool checkedC && checkedC)
                     {
-                        inpStream.Close();
+                        factory = new CThreadFactory();
+                    }
+                    else if (useAsmRadio.IsChecked is bool checkedAsm && checkedAsm)
+                    {
+                        testAsm();
+                        return;
+                    }
+                    else
+                    {
+                        MessageBox.Show("Choose a library before starting.");
+                        return;
                     }
 
-                    inpStream = new MemoryStream();
+                    processImage(factory);
 
-                    using (FileStream ms = File.Open(inpFileDir, FileMode.Open))
-                    {
-                        ms.CopyTo(inpStream);
-                    }
-                    //inpImagePreview.Source = new BitmapImage(new Uri(inpFileDir));
-                    
-                    if (inpImageData != null)
-                    {
-                        unlockInpImage();
-                    }
-                    
-                    if (inpImage != null)
-                    {
-                        inpImage.Dispose();
-                    }
-
-                    inpImage = new Bitmap(inpStream);
-                    lockInpImage();
-
-                    inpImagePreview.Source = BitmapSource.Create(
-                        inpImageData.Width, inpImageData.Height,
-                        inpImage.HorizontalResolution, inpImage.VerticalResolution,
-                        System.Windows.Media.PixelFormats.Bgr24, null,
-                        inpImageData.Scan0, inpImageData.Stride * inpImageData.Height,
-                        inpImageData.Stride);
-
+                    inputImage.Save(outDir);
+                    loadOutPreview(outDir);
                 }
             }
             catch (UriFormatException exc)
             {
-                Debug.WriteLine($"Cannot open file: {exc.Data}.");
-            }
-        }
-        
-        private void loadOutPreview()
-        {
-            outFileDir = outFilenameBox.Text;
-            
-            try
-            {
-                FileStream outStream = File.Open(outFileDir, FileMode.Open);
-                Bitmap outImage = new Bitmap(outStream);
-                
-                System.Drawing.Imaging.BitmapData outData = outImage.LockBits(
-                    new Rectangle(0, 0, outImage.Width, outImage.Height),
-                    System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                    outImage.PixelFormat);
-
-                outImagePreview.Source = BitmapSource.Create(
-                    outData.Width, outData.Height,
-                    outImage.HorizontalResolution, outImage.VerticalResolution,
-                    System.Windows.Media.PixelFormats.Bgr24, null,
-                    outData.Scan0, outData.Stride * outData.Height,
-                    outData.Stride);
-
-                outImage.UnlockBits(outData);
-                outStream.Close();
-                outImage.Dispose();
+                MessageBox.Show(exc.Message);
             }
             catch (FileNotFoundException exc)
             {
-                Debug.WriteLine($"Cannot open file: {exc.Data}.");
+                MessageBox.Show(exc.Message);
+            }
+        }
+        
+        private void loadInpPreview(string inpDir)
+        {
+            inpImagePreview.Source = inputImage.LoadImage(inpDir);
+        }
+        
+        private void loadOutPreview(string outDir)
+        {   
+            try
+            {
+                outImagePreview.Source = ImageContainer.CreateBitmapSource(outFilenameBox.Text);
+            }
+            catch (FileNotFoundException e)
+            {
+                MessageBox.Show(e.Message);
+            }
+            catch (ArgumentException e)
+            {
+                MessageBox.Show("Cannot determine the pixel format of the image.");
             }
         }
 
@@ -335,8 +231,15 @@ namespace GaussBlur
 
             if (fileDialog.ShowDialog() == true)
             {
-                inpFilenameBox.Text = fileDialog.FileName;
-                loadInpPreview();
+                try
+                {
+                    loadInpPreview(fileDialog.FileName);
+                    inpFilenameBox.Text = fileDialog.FileName;
+                }
+                catch (ArgumentException exc)
+                {
+                    MessageBox.Show(exc.Message);
+                }
             }
         }
 

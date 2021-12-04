@@ -151,8 +151,7 @@
                     <TextBox x:Name="outFilenameBox"
                              Grid.Row="1"
                              Grid.Column="1"
-                             Style="{StaticResource TextBoxStyle}"
-                             LostFocus="outFilenameBox_LostFocus"/>
+                             Style="{StaticResource TextBoxStyle}"/>
                     <Button x:Name="browseOutButton"
                             Content="Browse"
                             Grid.Row="1"
