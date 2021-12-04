@@ -11,9 +11,11 @@ namespace GaussBlur
 
         public int TotalRepeats { get; private set; }
 
-        public long RepeatsDone{ get => TaskBarrier.CurrentPhaseNumber / 2; }
+        public int RepeatsDone { get => (int)TaskBarrier.CurrentPhaseNumber / 2; }
 
         public int ThreadCount { get; private set; }
+
+        protected int totalThreadRuns;
 
         public BlurThreadSynchronizer(int threadCount, int repeats)
         {
@@ -22,12 +24,25 @@ namespace GaussBlur
 
             ThreadCount = threadCount;
             TotalRepeats = repeats;
+
+            totalThreadRuns = ThreadCount * TotalRepeats;
+            
             Reset();
         }
 
-        public void SignalAndWait()
+        ~BlurThreadSynchronizer()
+        {
+            TaskBarrier.Dispose();
+        }
+
+        public virtual void SignalAndWait()
         {
             TaskBarrier.SignalAndWait();
+        }
+
+        public int PercentDoneInclusive()
+        {
+            return 100 * (ThreadCount - TaskBarrier.ParticipantsRemaining + RepeatsDone * ThreadCount) / totalThreadRuns;
         }
 
         public void Reset()

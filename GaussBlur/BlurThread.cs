@@ -7,13 +7,13 @@ namespace GaussBlur
 {
     abstract class BlurThread
     {
-        public int StartPos { get; private set; }
+        public int StartPos { get; protected set; }
 
-        public int EndPos { get; private set; }
+        public int EndPos { get; protected set; }
         
-        public Thread CurrentThread { get; private set; }
+        public Thread CurrentThread { get; protected set; }
 
-        public BlurTask Task { get; private set; }
+        public BlurTask Task { get; protected set; }
         
         public BlurThread(BlurTask task, int start, int end)
         {

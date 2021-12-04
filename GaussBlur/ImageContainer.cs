@@ -90,6 +90,7 @@ namespace GaussBlur
                 if (BoundStream.CanRead)
                 {
                     BoundStream.Close();
+                    BoundStream.Dispose();
                 }
                 BoundStream = null;
             }
@@ -127,26 +128,27 @@ namespace GaussBlur
         {
             if (File.Exists(fileDir))
             {
-                FileStream stream = File.Open(fileDir, FileMode.Open);
-                Bitmap image = new Bitmap(stream);
+                using (FileStream stream = File.Open(fileDir, FileMode.Open))
+                {
+                    Bitmap image = new Bitmap(stream);
 
-                System.Drawing.Imaging.BitmapData data = image.LockBits(
-                    new Rectangle(0, 0, image.Width, image.Height),
-                    System.Drawing.Imaging.ImageLockMode.ReadOnly,
-                    image.PixelFormat);
+                    System.Drawing.Imaging.BitmapData data = image.LockBits(
+                        new Rectangle(0, 0, image.Width, image.Height),
+                        System.Drawing.Imaging.ImageLockMode.ReadOnly,
+                        image.PixelFormat);
 
-                BitmapSource source = BitmapSource.Create(
-                    data.Width, data.Height,
-                    image.HorizontalResolution, image.VerticalResolution,
-                    getPixelFormat(image.PixelFormat), null,
-                    data.Scan0, data.Stride * data.Height,
-                    data.Stride);
+                    BitmapSource source = BitmapSource.Create(
+                        data.Width, data.Height,
+                        image.HorizontalResolution, image.VerticalResolution,
+                        getPixelFormat(image.PixelFormat), null,
+                        data.Scan0, data.Stride * data.Height,
+                        data.Stride);
 
-                image.UnlockBits(data);
-                stream.Close();
-                image.Dispose();
+                    image.UnlockBits(data);
+                    image.Dispose();
 
-                return source;
+                    return source;
+                }
             }
             else
             {

@@ -7,8 +7,6 @@ namespace GaussBlur
 {
     unsafe class CThread : BlurThread
     {      
-        public Thread CurrentThread { get; private set; }
-
         private byte* helper;
 
         private double* kernel;

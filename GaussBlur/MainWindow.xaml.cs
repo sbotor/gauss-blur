@@ -26,10 +26,6 @@ namespace GaussBlur
         
         private static Regex numRegex = new Regex(@"[0-9.]+");
 
-        //private MemoryStream? inpStream;
-        //private Bitmap? inpImage;
-        //private System.Drawing.Imaging.BitmapData? inpImageData;
-
         private ImageContainer inputImage;
 
         public MainWindow()
@@ -106,14 +102,11 @@ namespace GaussBlur
             inputImage.LockImage();
             if (inputImage.ImageData != null)
             {   
-                Stopwatch sw = new Stopwatch();
                 BlurTask blurTask = new BlurTask(inputImage.ImageData, threadCount, stdDev, repeatCount);
 
-                sw.Start();
-                blurTask.RunThreads(factory);
-                sw.Stop();
-
-                MessageBox.Show($"Finished in {sw.ElapsedMilliseconds / 1000.0 } seconds.");
+                ProgressWindow prog = new ProgressWindow(this);
+                blurTask.RunWorker(factory, prog);
+                prog.ShowDialog();
             }
             inputImage.UnlockImage();
         }

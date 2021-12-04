@@ -1,5 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Windows;
 
 namespace GaussBlur
 {
@@ -10,6 +15,10 @@ namespace GaussBlur
         public double[] Kernel { get; private set; }
 
         public ImageData Data { get; private set; }
+
+        public BackgroundWorker Worker { get; private set; }
+
+        public Stopwatch RuntimeStopwatch { get; private set; }
 
         public BlurTask(System.Drawing.Imaging.BitmapData data, int threadCount, double kernelSD, int repeats)
             : base(threadCount, repeats)
@@ -24,6 +33,43 @@ namespace GaussBlur
         {
             Reset();
             Threads.Clear();
+        }
+
+        public override void SignalAndWait()
+        {
+            if (Worker != null)
+            {
+                Worker.ReportProgress(PercentDoneInclusive());
+            }
+            
+            base.SignalAndWait();
+        }
+
+        public void RunWorker(IThreadFactory factory, ProgressWindow progWindow)
+        {
+            Worker = new BackgroundWorker();
+            Worker.WorkerReportsProgress = true;
+            
+            Worker.DoWork += new DoWorkEventHandler(
+                delegate (object o, DoWorkEventArgs args)
+                {
+                    RunThreads(args.Argument as IThreadFactory);
+                });
+
+            Worker.ProgressChanged += new ProgressChangedEventHandler(
+                delegate (object o, ProgressChangedEventArgs args)
+                {
+                    progWindow.progressStatus.Value = args.ProgressPercentage;
+                });
+
+            Worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
+                delegate (object o, RunWorkerCompletedEventArgs args)
+                {
+                    MessageBox.Show(progWindow, $"Finished in {RuntimeStopwatch.ElapsedMilliseconds / 1000.0 } seconds.");
+                    progWindow.Close();
+                });
+
+            Worker.RunWorkerAsync(factory);
         }
 
         public static double[] CreateKernel(double sd)
@@ -45,9 +91,12 @@ namespace GaussBlur
 
             return kernel;
         }
-
+        
         public void RunThreads(IThreadFactory factory)
         {
+            RuntimeStopwatch = new Stopwatch();
+            RuntimeStopwatch.Start();
+
             unsafe
             {
                 fixed(double* kernelP = Kernel)
@@ -65,10 +114,12 @@ namespace GaussBlur
                             thread.Start();
                         }
 
-                        Threads.ForEach((t) => t.Join());
+                        Threads.ForEach(t => t.Join());
                     }
                 }
             }
+
+            RuntimeStopwatch.Stop();
         }
     }
 }
