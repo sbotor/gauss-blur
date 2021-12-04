@@ -1,12 +1,6 @@
 #ifndef GAUSSBLURC
 #define GAUSSBLURC
 
-//struct kernelStruct {
-//	double* data;
-//	int size;
-//	int maxCenterOffset;
-//};
-
 __declspec(dllexport) int addTest(int first, int second);
 
 __declspec(dllexport) void normalizeColor(double* c);

@@ -5,8 +5,6 @@ using System.Windows;
 using System.Windows.Media.Imaging;
 using System.IO;
 using System.Drawing;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
@@ -22,7 +20,7 @@ namespace GaussBlur
         private int threadCount = 16;
         private int repeatCount = 1;
 
-        private static string inpFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\medic.jpg";
+        private static string inpFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\aei.jpg";
 
         private static string outFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
         
