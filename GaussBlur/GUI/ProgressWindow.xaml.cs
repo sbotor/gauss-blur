@@ -12,7 +12,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 
-namespace GaussBlur
+namespace GaussBlur.GUI
 {
     /// <summary>
     /// Interaction logic for ProgressWindow.xaml
@@ -30,6 +30,8 @@ namespace GaussBlur
 
             Left = window.Left + (window.Width - Width) / 2;
             Top = window.Top + window.Height / 2;
+
+            Width = window.Width / 3;
         }
 
         private void init()

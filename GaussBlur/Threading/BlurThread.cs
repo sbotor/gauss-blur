@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 
-namespace GaussBlur
+namespace GaussBlur.Threading
 {
     abstract class BlurThread
     {
@@ -26,8 +26,29 @@ namespace GaussBlur
 
         protected abstract void Run();
 
-        public abstract void Start();
+        public virtual bool CheckIfCanceled()
+        {
+            if (Task.Worker != null)
+            {
+                return Task.Worker.CancellationPending;
+            }
 
-        public abstract void Join();
+            return false;
+        }
+
+        public virtual void SignalAndWait()
+        {
+            Task.SignalAndWait();
+        }
+
+        public virtual void Start()
+        {
+            CurrentThread.Start();
+        }
+
+        public virtual void Join()
+        {
+            CurrentThread.Join();
+        }
     }
 }

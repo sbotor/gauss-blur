@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace GaussBlur
+namespace GaussBlur.Threading
 {
     unsafe interface IThreadFactory
     {

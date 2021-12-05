@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 
-namespace GaussBlur
+using GaussBlur.ImageProc;
+using GaussBlur.DLL;
+
+namespace GaussBlur.Threading
 {
     unsafe class CThread : BlurThread
     {      
@@ -35,7 +38,14 @@ namespace GaussBlur
                     imageData.Height,
                     kernel);
 
-                Task.SignalAndWait();
+                if (CheckIfCanceled())
+                {
+                    return;
+                }
+                else
+                {
+                    SignalAndWait();
+                }
 
                 CLib.blurY(
                     helper,
@@ -46,18 +56,15 @@ namespace GaussBlur
                     imageData.Height,
                     kernel);
 
-                Task.SignalAndWait();
+                if (CheckIfCanceled())
+                {
+                    return;
+                }
+                else
+                {
+                    SignalAndWait();
+                }
             }
-        }
-
-        public override void Start()
-        {
-            CurrentThread.Start();
-        }
-
-        public override void Join()
-        {
-            CurrentThread.Join();
         }
     }
 }

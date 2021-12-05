@@ -6,7 +6,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace GaussBlur
+using GaussBlur.ImageProc;
+
+namespace GaussBlur.Threading
 {
     class BlurTask : BlurThreadSynchronizer
     {
@@ -16,9 +18,13 @@ namespace GaussBlur
 
         public ImageData Data { get; private set; }
 
-        public BackgroundWorker Worker { get; private set; }
+        public BackgroundWorker? Worker { get; private set; }
 
         public Stopwatch RuntimeStopwatch { get; private set; }
+
+        public bool Finished { get => RepeatsDone == TotalRepeats; }
+
+        private Mutex mutex;
 
         public BlurTask(System.Drawing.Imaging.BitmapData data, int threadCount, double kernelSD, int repeats)
             : base(threadCount, repeats)
@@ -27,8 +33,28 @@ namespace GaussBlur
             Kernel = CreateKernel(kernelSD);
 
             Threads = new List<BlurThread>();
+
+            mutex = new Mutex();
         }
         
+        ~BlurTask()
+        {
+            if (Worker != null)
+            {
+                Worker.Dispose();
+            }
+
+            mutex.Dispose();
+
+            foreach (BlurThread thread in Threads)
+            {
+                if (thread.CurrentThread.IsAlive)
+                {
+                    thread.Join();
+                }
+            }
+        }
+
         public void Clear()
         {
             Reset();
@@ -37,19 +63,28 @@ namespace GaussBlur
 
         public override void SignalAndWait()
         {
+            mutex.WaitOne();
             if (Worker != null)
             {
                 Worker.ReportProgress(PercentDoneInclusive());
             }
-            
+            mutex.ReleaseMutex();
+
             base.SignalAndWait();
         }
 
-        public void RunWorker(IThreadFactory factory, ProgressWindow progWindow)
+        public void RunWorker(IThreadFactory factory, GUI.ProgressWindow progWindow)
         {
+            if (Worker != null)
+            {
+                Worker.Dispose();
+                Worker = null;
+            }
+
             Worker = new BackgroundWorker();
             Worker.WorkerReportsProgress = true;
-            
+            Worker.WorkerSupportsCancellation = true;
+
             Worker.DoWork += new DoWorkEventHandler(
                 delegate (object o, DoWorkEventArgs args)
                 {
@@ -65,7 +100,7 @@ namespace GaussBlur
             Worker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(
                 delegate (object o, RunWorkerCompletedEventArgs args)
                 {
-                    MessageBox.Show(progWindow, $"Finished in {RuntimeStopwatch.ElapsedMilliseconds / 1000.0 } seconds.");
+                    progWindow.progressStatus.Value = 100;
                     progWindow.Close();
                 });
 

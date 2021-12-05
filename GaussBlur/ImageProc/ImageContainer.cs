@@ -6,7 +6,7 @@ using System.IO;
 using System.Text;
 using System.Windows.Media.Imaging;
 
-namespace GaussBlur
+namespace GaussBlur.ImageProc
 {
     class ImageContainer
     {
@@ -90,8 +90,8 @@ namespace GaussBlur
                 if (BoundStream.CanRead)
                 {
                     BoundStream.Close();
-                    BoundStream.Dispose();
                 }
+                BoundStream.Dispose();
                 BoundStream = null;
             }
 
@@ -130,24 +130,23 @@ namespace GaussBlur
             {
                 using (FileStream stream = File.Open(fileDir, FileMode.Open))
                 {
-                    Bitmap image = new Bitmap(stream);
-
-                    System.Drawing.Imaging.BitmapData data = image.LockBits(
+                    using (Bitmap image = new Bitmap(stream))
+                    {
+                        System.Drawing.Imaging.BitmapData data = image.LockBits(
                         new Rectangle(0, 0, image.Width, image.Height),
                         System.Drawing.Imaging.ImageLockMode.ReadOnly,
                         image.PixelFormat);
 
-                    BitmapSource source = BitmapSource.Create(
-                        data.Width, data.Height,
-                        image.HorizontalResolution, image.VerticalResolution,
-                        getPixelFormat(image.PixelFormat), null,
-                        data.Scan0, data.Stride * data.Height,
-                        data.Stride);
+                        BitmapSource source = BitmapSource.Create(
+                            data.Width, data.Height,
+                            image.HorizontalResolution, image.VerticalResolution,
+                            getPixelFormat(image.PixelFormat), null,
+                            data.Scan0, data.Stride * data.Height,
+                            data.Stride);
 
-                    image.UnlockBits(data);
-                    image.Dispose();
-
-                    return source;
+                        image.UnlockBits(data);
+                        return source;
+                    }
                 }
             }
             else

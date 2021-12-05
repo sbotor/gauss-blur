@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace GaussBlur
+namespace GaussBlur.ImageProc
 {
     public unsafe class ImageData
     {

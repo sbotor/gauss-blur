@@ -1,6 +1,4 @@
-﻿#define CTEST
-
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Media.Imaging;
 using System.IO;
@@ -9,7 +7,11 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using Microsoft.Win32;
 
-namespace GaussBlur
+using GaussBlur.ImageProc;
+using GaussBlur.Threading;
+using GaussBlur.DLL;
+
+namespace GaussBlur.GUI
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
@@ -97,18 +99,35 @@ namespace GaussBlur
             return true;
         }
 
-        private void processImage(IThreadFactory factory)
+        private bool processImage(IThreadFactory factory)
         {
+            bool success = false;
             inputImage.LockImage();
             if (inputImage.ImageData != null)
-            {   
+            {
                 BlurTask blurTask = new BlurTask(inputImage.ImageData, threadCount, stdDev, repeatCount);
-
-                ProgressWindow prog = new ProgressWindow(this);
-                blurTask.RunWorker(factory, prog);
-                prog.ShowDialog();
+                try
+                {
+                    ProgressWindow prog = new ProgressWindow(this);
+                    blurTask.RunWorker(factory, prog);
+                    prog.ShowDialog();
+                }
+                finally
+                {
+                    if (blurTask.Worker != null && blurTask.Worker.IsBusy || !blurTask.Finished)
+                    {
+                        blurTask.Worker.CancelAsync();
+                    }
+                    else
+                    {
+                        MessageBox.Show($"Finished in {blurTask.RuntimeStopwatch.ElapsedMilliseconds / 1000.0 } seconds.");
+                        success = true;
+                    }
+                }
             }
             inputImage.UnlockImage();
+
+            return success;
         }
 
         private void testAsm()
@@ -142,7 +161,7 @@ namespace GaussBlur
 
                 if (checkParams())
                 {
-                    IThreadFactory factory = null;
+                    IThreadFactory factory;
 
                     if (useCRadio.IsChecked is bool checkedC && checkedC)
                     {
@@ -159,10 +178,11 @@ namespace GaussBlur
                         return;
                     }
 
-                    processImage(factory);
-
-                    inputImage.Save(outDir);
-                    loadOutPreview(outDir);
+                    if (processImage(factory))
+                    {
+                        inputImage.Save(outDir);
+                        loadOutPreview(outDir);
+                    }
                 }
             }
             catch (UriFormatException exc)
@@ -247,6 +267,13 @@ namespace GaussBlur
             {
                 outFilenameBox.Text = fileDialog.FileName;
             }
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            base.OnClosed(e);
+            Close();
+            Environment.Exit(0);
         }
     }
 }
