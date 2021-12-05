@@ -1,6 +1,5 @@
 LIBRARY GaussBlurAsm
 
-EXPORTS testSIMD
-EXPORTS sanityTest
-EXPORTS testParams
-EXPORTS init
+EXPORTS Init
+EXPORTS BlurX
+EXPORTS BlurY

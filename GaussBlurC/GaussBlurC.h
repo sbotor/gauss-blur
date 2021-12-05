@@ -7,8 +7,8 @@ __declspec(dllexport) void normalizeColor(double* c);
 
 __declspec(dllexport) void normalizeColors(double* c);
 
-__declspec(dllexport) void blurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel);
+__declspec(dllexport) void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel);
 
-__declspec(dllexport) void blurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel);
+__declspec(dllexport) void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel);
 
 #endif // !GAUSSBLURC

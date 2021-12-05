@@ -105,7 +105,7 @@ namespace GaussBlur.GUI
             inputImage.LockImage();
             if (inputImage.ImageData != null)
             {
-                BlurTask blurTask = new BlurTask(inputImage.ImageData, threadCount, stdDev, repeatCount);
+                BlurTask blurTask = new BlurTask(inputImage.ImageData, threadCount, repeatCount);
                 try
                 {
                     ProgressWindow prog = new ProgressWindow(this);
@@ -130,26 +130,6 @@ namespace GaussBlur.GUI
             return success;
         }
 
-        private void testAsm()
-        {
-            //double[] first = new double[] { 1.1, 2.2, 3.3, 4.4, 5.5, 6.6, 7.7, 8.8 },
-            //    second = new double[] { 2d, 2d, 2d, 0.5d, 2d, 0.5d, 2d, 1d };
-
-            double[] firstD = new double[] { 1.1, 2.2, 3.3, 4.4 },
-                secondD = new double[] { 2d, 1d, 2d, 0.5d };
-
-            AsmLib.safeTestSIMD(firstD, secondD);
-
-            byte[] dataB = new byte[5],
-                helperB = new byte[5];
-            int start = 1,
-                end = 2,
-                stride = 3,
-                height = 4;
-
-            AsmLib.safeTestParams(dataB, helperB, start, end, stride, height, firstD);
-        }
-
         private void blurButton_Click(object sender, RoutedEventArgs e)
         {
             string outDir = outFilenameBox.Text,
@@ -165,12 +145,11 @@ namespace GaussBlur.GUI
 
                     if (useCRadio.IsChecked is bool checkedC && checkedC)
                     {
-                        factory = new CThreadFactory();
+                        factory = new CThreadFactory(stdDev);
                     }
                     else if (useAsmRadio.IsChecked is bool checkedAsm && checkedAsm)
                     {
-                        testAsm();
-                        return;
+                        factory = new AsmThreadFactory(stdDev);
                     }
                     else
                     {

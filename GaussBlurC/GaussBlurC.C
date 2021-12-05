@@ -35,11 +35,10 @@ void normalizeColors(double* c) {
 		c[2] = 0;
 }
 
-void blurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
+void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
 	const int absStride = abs(imageStride), imageSize = absStride * imageHeight,
 		startRow = start / imageStride,
-		endRow = end / imageStride,
-		width = (absStride - (absStride % 4)) / 3;
+		endRow = end / imageStride;
 
 	// First pass.
 	for (int y = startRow; y <= endRow; y++) {
@@ -100,7 +99,7 @@ void blurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 	}
 }
 
-void blurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
+void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
 	const int absStride = abs(imageStride), imageSize = absStride * imageHeight,
 		startRow = start / imageStride,
 		endRow = end / imageStride;

@@ -29,7 +29,7 @@ namespace GaussBlur.Threading
             {
                 ImageData imageData = Task.Data;
 
-                CLib.blurX(
+                CLib.BlurX(
                     imageData.Data,
                     helper,
                     StartPos,
@@ -42,12 +42,9 @@ namespace GaussBlur.Threading
                 {
                     return;
                 }
-                else
-                {
-                    SignalAndWait();
-                }
+                SignalAndWait();
 
-                CLib.blurY(
+                CLib.BlurY(
                     helper,
                     imageData.Data,
                     StartPos,
@@ -60,10 +57,7 @@ namespace GaussBlur.Threading
                 {
                     return;
                 }
-                else
-                {
-                    SignalAndWait();
-                }
+                SignalAndWait();
             }
         }
     }
