@@ -59,9 +59,8 @@ OUTER_LOOP:
 
 	; Inner loop
 	mov rdx, 0 ; Inner loop counter in RDX
-	
-	; R13 - current pixel position
 	INNER_LOOP:
+		; R13 - current pixel position
 		mov r13, r12 ; Get current row offset
 		add r13, rdx ; Current pixel position in R13
 
@@ -86,11 +85,24 @@ OUTER_LOOP_END:
 
 BlurX endp
 
-ADD_COLORS_X macro offs, kern_offs
-	vmovupd ymm2, ymmword ptr [rcx + kern_offs * 32]
+ADD_COLORS_X0 macro offs
 	pmovzxbd xmm1, dword ptr [rbx + r13 + offs * 3]
 	vcvtdq2pd ymm1, xmm1
 	vmulpd ymm1, ymm1, ymm2
+	vaddpd ymm0, ymm0, ymm1
+endm
+
+ADD_COLORS_X1 macro offs
+	pmovzxbd xmm1, dword ptr [rbx + r13 + offs * 3]
+	vcvtdq2pd ymm1, xmm1
+	vmulpd ymm1, ymm1, ymm3
+	vaddpd ymm0, ymm0, ymm1
+endm
+
+ADD_COLORS_X2 macro offs
+	pmovzxbd xmm1, dword ptr [rbx + r13 + offs * 3]
+	vcvtdq2pd ymm1, xmm1
+	vmulpd ymm1, ymm1, ymm4
 	vaddpd ymm0, ymm0, ymm1
 endm
 
@@ -102,49 +114,63 @@ BlurPixelX proc
 	push r9
 	push r10
 	
-	vxorpd ymm0, ymm0, ymm0 ; Zero ymm0 which holds the sum
 	mov rbx, data_array
 	mov rcx, kernel_array
+
+	vpxor ymm0, ymm0, ymm0 ; Zero ymm0 which holds the sum
+	vmovupd ymm2, ymmword ptr [rcx + 64]
+	vmovupd ymm3, ymmword ptr [rcx + 32]
+	vmovupd ymm4, ymmword ptr [rcx]
 	
 THIRD_COL:
 	cmp rdx, 5
 	jle SECOND_COL
-	ADD_COLORS_X -2, 0
-	ADD_COLORS_X -1, 1
+	ADD_COLORS_X2 -2
+	ADD_COLORS_X1 -1
 	jmp PIXEL_CELL
 
 SECOND_COL:
 	cmp rdx, 2
 	jle PIXEL_CELL
-	ADD_COLORS_X -1, 1
+	ADD_COLORS_X1 -1
 
 PIXEL_CELL:
-	ADD_COLORS_X 0, 2
+	ADD_COLORS_X0 0
 
 	add rdx, 8
 THIRD_TO_LAST_COL:
 	cmp rdx, r15
 	jge SECOND_TO_LAST_COL
-	ADD_COLORS_X 1, 2
-	ADD_COLORS_X 2, 3
+	ADD_COLORS_X1 1
+	ADD_COLORS_X2 2
 	jmp GET_COLORS
 
 SECOND_TO_LAST_COL:
 	sub rdx, 3
 	cmp rdx, r15
 	jge GET_COLORS
-	ADD_COLORS_X 1, 2
+	ADD_COLORS_X1 1
 	
 GET_COLORS:
 	vcvtpd2dq xmm0, ymm0
-	pextrd r8d, xmm0, 0
-	pextrd r9d, xmm0, 1
-	pextrd r10d, xmm0, 2
+	packusdw xmm0, xmm1
+	packuswb xmm0, xmm1
+	
+	pextrb eax, xmm0, 0
+	mov [rbx + r13], al
+	pextrb eax, xmm0, 1
+	mov [rbx + r13 + 1], al
+	pextrb eax, xmm0, 2
+	mov [rbx + r13 + 2], al
 
-	call NormalizeColors
-	mov [rbx + r13], r8b
-	mov [rbx + r13 + 1], r9b
-	mov [rbx + r13 + 2], r10b
+	;pextrd r8d, xmm0, 0
+	;pextrd r9d, xmm0, 1
+	;pextrd r10d, xmm0, 2
+
+	;call NormalizeColors
+	;mov [rbx + r13], r8b
+	;mov [rbx + r13 + 1], r9b
+	;mov [rbx + r13 + 2], r10b
 
 	pop r10
 	pop r9
@@ -216,14 +242,6 @@ OUTER_LOOP_END:
 	ret
 	
 BlurY endp
-
-ADD_COLORS_Y macro
-	vmovupd ymm2, ymmword ptr [rcx + kern_offs * 32]
-	pmovzxbd xmm1, dword ptr [rbx + r13 + offs * 3]
-	vcvtdq2pd ymm1, xmm1
-	vmulpd ymm1, ymm1, ymm2
-	vaddpd ymm0, ymm0, ymm1
-endm
 
 BlurPixelY proc
 	push rbx
