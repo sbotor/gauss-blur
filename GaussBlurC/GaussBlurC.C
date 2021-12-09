@@ -1,10 +1,6 @@
 #include "pch.h"
 #include "GaussBlurC.h"
 
-#define ADD_COLOR_X(n, offset, kern_pos) colors[n] += src[pixel + 3 * offset + n] * kernel[kern_pos]
-
-#define ADD_COLOR_Y(n, offset, kern_pos) colors[n] += src[x + (y + offset) * imageStride + n] * kernel[kern_pos]
-
 const int MAX_CENT_OFF = 2;
 
 int addTest(int first, int second) {
@@ -35,6 +31,7 @@ void normalizeColors(double* c) {
 		c[2] = 0;
 }
 
+#define ADD_COLOR_X(n, offset, kern_pos) colors[n] += src[pixel + 3 * offset + n] * kernel[kern_pos]
 void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
 	const int absStride = abs(imageStride), imageSize = absStride * imageHeight,
 		startRow = start / imageStride,
@@ -99,6 +96,7 @@ void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 	}
 }
 
+#define ADD_COLOR_Y(n, offset, kern_pos) colors[n] += src[x + (y + offset) * imageStride + n] * kernel[kern_pos]
 void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
 	const int absStride = abs(imageStride), imageSize = absStride * imageHeight,
 		startRow = start / imageStride,

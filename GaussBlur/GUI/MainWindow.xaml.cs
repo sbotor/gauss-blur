@@ -18,8 +18,8 @@ namespace GaussBlur.GUI
     /// </summary>
     public partial class MainWindow : Window
     {
-        private double stdDev = 16;
-        private int threadCount = 16;
+        private double stdDev = 1;
+        private int threadCount = 1;
         private int repeatCount = 1;
 
         private const string inpFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\aei.jpg";
@@ -37,7 +37,7 @@ namespace GaussBlur.GUI
             inpFilenameBox.Text = inpFileDir;
             outFilenameBox.Text = outFileDir;
 
-            useCRadio.IsChecked = true;
+            useAsmRadio.IsChecked = true;
 
             inputImage = new ImageContainer();
 
