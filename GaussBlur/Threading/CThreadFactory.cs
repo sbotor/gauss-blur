@@ -30,7 +30,7 @@ namespace GaussBlur.Threading
             kernel[1] = constance * Math.Exp(-0.5 / variance);
             kernel[0] = constance;
 
-            double kernelSum = kernel[0] * 2 + kernel[1] * 2 + kernel[2];
+            double kernelSum = kernel[0] + kernel[1] * 2 + kernel[2] * 2;
 
             kernel[0] = kernel[0] / kernelSum;
             kernel[1] = kernel[1] / kernelSum;

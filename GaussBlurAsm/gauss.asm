@@ -1,10 +1,14 @@
 .data?
 data_array qword ptr ?
 helper_array qword ptr ?
+kernel_array qword ptr ?
+
 img_stride qword ?
 img_height qword ?
-img_size qword ?
-kernel_array qword ptr ?
+img_padding qword ?
+img_byte_width qword ?
+b_width_6_less qword ?
+b_width_3_less qword ?
 
 .code
 
@@ -16,255 +20,145 @@ Init proc
 	mov rcx, [rsp+40]
 	mov kernel_array, rcx
 
-	; Calculate size
-	mov rax, img_stride
-	mul img_height
-	mov img_size, rax
+	; Calculate padding
+	mov rax, r8
+	xor rdx, rdx
+	mov r10, 4
+	div r10
+	mov img_padding, rdx
+
+	; Calculate byte width
+	sub r8, img_padding
+	mov img_byte_width, r8
+
+	; Calculate additional byte widths
+	sub r8, 3
+	mov b_width_3_less, r8
+	sub r8, 3
+	mov b_width_6_less, r8
 
 	ret
 Init endp
 
-BlurX proc
-
-	; R8 - startPos
-	; R9 - endPos
-	; R10 - startRow
-	; R11 - endRow
-	; R15 - imageStride
-	
-	.code
-	; Setup
-	mov r15, img_stride ; Save image stride to R15
-	mov r8, rcx ; Save starting position to R8
-	mov r9, rdx ; Save ending position to R9
-
-	mov rax, r8 ; Get starting position
-	xor rdx, rdx ; Clear RDX
-	div r15 ; start_row = start_pos / image_stride
-	mov r10, rax ; Save the starting row to R10
-
-	mov rax, r9 ; Get ending position
-	xor rdx, rdx ; Clear RDX
-	div r15 ; end_row = end_pos / image_stride
-	mov r11, rax ; Save the ending row to R11
-
-	; Outer loop
-	mov rcx, r10 ; Outer loop counter in RCX
-OUTER_LOOP:
-	
-	; R12 - row offset
-	mov rax, rcx ; Get outer loop counter
-	mul r15 ; Multiply by image stride
-	mov r12, rax ; Save the row offset to R12
-
-	; Inner loop
-	mov rdx, 0 ; Inner loop counter in RDX
-	INNER_LOOP:
-		; R13 - current pixel position
-		mov r13, r12 ; Get current row offset
-		add r13, rdx ; Current pixel position in R13
-
-		cmp r13, R8 ; Compare with start_pos
-		jl INNER_LOOP_END
-		cmp r13, R9 ; Compare with end_pos
-		jge INNER_LOOP_END
-
-		call BlurPixelX
-
-	INNER_LOOP_END:
-		add rdx, 3 ; Increment inner counter by 3
-		cmp rdx, r15 ; Compare to image stride
-		jl INNER_LOOP
-
-OUTER_LOOP_END:
-	inc rcx ; Increment outer counter by 1
-	cmp rcx, r11 ; Compare to ending row
-	jle OUTER_LOOP
-
-	ret
-
-BlurX endp
-
-ADD_COLORS_X0 macro offs
-	pmovzxbd xmm1, dword ptr [rbx + r13 + offs * 3]
+ADD_COLORS_X0 macro
+	pmovzxbd xmm1, dword ptr [rbx + rcx]
 	vcvtdq2pd ymm1, xmm1
 	vmulpd ymm1, ymm1, ymm2
 	vaddpd ymm0, ymm0, ymm1
 endm
 
-ADD_COLORS_X1 macro offs
-	pmovzxbd xmm1, dword ptr [rbx + r13 + offs * 3]
+ADD_COLORS_X1 macro off
+	pmovzxbd xmm1, dword ptr [rbx + rcx + 3 * off]
 	vcvtdq2pd ymm1, xmm1
 	vmulpd ymm1, ymm1, ymm3
 	vaddpd ymm0, ymm0, ymm1
 endm
 
-ADD_COLORS_X2 macro offs
-	pmovzxbd xmm1, dword ptr [rbx + r13 + offs * 3]
+ADD_COLORS_X2 macro off
+	pmovzxbd xmm1, dword ptr [rbx + rcx + 3 * off]
 	vcvtdq2pd ymm1, xmm1
 	vmulpd ymm1, ymm1, ymm4
 	vaddpd ymm0, ymm0, ymm1
 endm
 
-BlurPixelX proc
+BlurX proc
 	push rbx
-	push rcx
-	push rdx
-	push r8
-	push r9
-	push r10
-	
+	push rsi
+	; RCX - startPos and loop counter
+	; R8 - endPos
+	; R9 - X position = i % stride
+	; R10 - byte_width - 6
+	; R11 - byte_width - 3
+	; R12 - byte_width
+	; R13 - padding
+	; R14 - img_stride
+
+	mov r8, rdx
 	mov rbx, data_array
-	mov rcx, kernel_array
+	mov r10, b_width_6_less
+	mov r11, b_width_3_less
+	mov r12, img_byte_width
+	mov r13, img_padding
+	mov r14, img_stride
 
-	vpxor ymm0, ymm0, ymm0 ; Zero ymm0 which holds the sum
-	vmovupd ymm2, ymmword ptr [rcx + 64]
-	vmovupd ymm3, ymmword ptr [rcx + 32]
-	vmovupd ymm4, ymmword ptr [rcx]
+	; Save kernel array info
+	mov rdx, kernel_array
+	vmovupd ymm2, ymmword ptr [rdx]
+	vmovupd ymm3, ymmword ptr [rdx + 32]
+	vmovupd ymm4, ymmword ptr [rdx + 64]
+
+LOOP_X_CHECK:
+	cmp rcx, r8
+	jl LOOP_X
+	jmp RETURN
+LOOP_X:
+		mov rax, rcx
+		xor rdx, rdx
+		div r14
+		mov r9, rdx
+
+		vpxor ymm0, ymm0, ymm0 ; Clear ymm0 which holds the sum
+
+	THIRD_COL:
+		cmp r9, 6
+		jl SECOND_COL
+		ADD_COLORS_X2 -2
+		ADD_COLORS_X1 -1
+		ADD_COLORS_X0
+		jmp THIRD_TO_LAST_COL
+	SECOND_COL:
+		cmp r9, 3
+		jl CENTER_PIXEL
+		ADD_COLORS_X1 -1
+
+	CENTER_PIXEL:
+		ADD_COLORS_X0
+
+	THIRD_TO_LAST_COL:
+		cmp r9, r10
+		jg SECOND_TO_LAST_COL
+		ADD_COLORS_X2 2
+		ADD_COLORS_X1 1
+		jmp GET_COLORS
+	SECOND_TO_LAST_COL:
+		cmp r9, r11
+		jg GET_COLORS
+		ADD_COLORS_X1 1
 	
-THIRD_COL:
-	cmp rdx, 5
-	jle SECOND_COL
-	ADD_COLORS_X2 -2
-	ADD_COLORS_X1 -1
-	jmp PIXEL_CELL
-
-SECOND_COL:
-	cmp rdx, 2
-	jle PIXEL_CELL
-	ADD_COLORS_X1 -1
-
-PIXEL_CELL:
-	ADD_COLORS_X0 0
-
-	add rdx, 8
-THIRD_TO_LAST_COL:
-	cmp rdx, r15
-	jge SECOND_TO_LAST_COL
-	ADD_COLORS_X1 1
-	ADD_COLORS_X2 2
-	jmp GET_COLORS
-
-SECOND_TO_LAST_COL:
-	sub rdx, 3
-	cmp rdx, r15
-	jge GET_COLORS
-	ADD_COLORS_X1 1
+	GET_COLORS:
+		vcvtpd2dq xmm0, ymm0
+		packusdw xmm0, xmm1
+		packuswb xmm0, xmm1
 	
-GET_COLORS:
-	vcvtpd2dq xmm0, ymm0
-	packusdw xmm0, xmm1
-	packuswb xmm0, xmm1
-	
-	pextrb eax, xmm0, 0
-	mov [rbx + r13], al
-	pextrb eax, xmm0, 1
-	mov [rbx + r13 + 1], al
-	pextrb eax, xmm0, 2
-	mov [rbx + r13 + 2], al
+		pextrb eax, xmm0, 0
+		mov [rbx + rcx], al
+		pextrb eax, xmm0, 1
+		mov [rbx + rcx + 1], al
+		pextrb eax, xmm0, 2
+		mov [rbx + rcx + 2], al
 
-	;pextrd r8d, xmm0, 0
-	;pextrd r9d, xmm0, 1
-	;pextrd r10d, xmm0, 2
+	LOOP_X_INC:
+		add rcx, 3
+		mov rax, rcx
+		xor rdx, rdx
+		div r12
+		cmp rdx, 0
+		jne LOOP_X_CHECK
+		add rcx, r13
+		jmp LOOP_X_CHECK
 
-	;call NormalizeColors
-	;mov [rbx + r13], r8b
-	;mov [rbx + r13 + 1], r9b
-	;mov [rbx + r13 + 2], r10b
-
-	pop r10
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
+RETURN:
+	pop rsi
 	pop rbx
 	ret
 
-BlurPixelX endp
+BlurX endp
 
 BlurY proc
-	; R8 - startPos
-	; R9 - endPos
-	; R10 - startRow
-	; R11 - endRow
-	; R15 - imageStride
 	
-	.code
-	; Setup
-	mov r15, img_stride ; Save image stride to R15
-	mov r8, rcx ; Save starting position to R8
-	mov r9, rdx ; Save ending position to R9
-
-	mov rax, r8 ; Get starting position
-	xor rdx, rdx ; Clear RDX
-	div r15 ; start_row = start_pos / image_stride
-	mov r10, rax ; Save the starting row to R10
-
-	mov rax, r9 ; Get ending position
-	xor rdx, rdx ; Clear RDX
-	div r15 ; end_row = end_pos / image_stride
-	mov r11, rax ; Save the ending row to R11
-
-	; Outer loop
-	mov rcx, r10 ; Outer loop counter in RCX
-OUTER_LOOP:
-	
-	; R12 - row offset
-	mov rax, rcx ; Get outer loop counter
-	mul r15 ; Multiply by image stride
-	mov r12, rax ; Save the row offset to R12
-
-	; Inner loop
-	mov rdx, 0 ; Inner loop counter in RDX
-	
-	; R13 - current pixel position
-	INNER_LOOP:
-		mov r13, r12 ; Get current row offset
-		add r13, rdx ; Current pixel position in R13
-
-		cmp r13, R8 ; Compare with start_pos
-		jl INNER_LOOP_END
-		cmp r13, R9 ; Compare with end_pos
-		jge INNER_LOOP_END
-
-		call BlurPixelY
-
-	INNER_LOOP_END:
-		add rdx, 3 ; Increment inner counter by 3
-		cmp rdx, r15 ; Compare to image stride
-		jl INNER_LOOP
-
-OUTER_LOOP_END:
-	inc rcx ; Increment outer counter by 1
-	cmp rcx, r11 ; Compare to ending row
-	jle OUTER_LOOP
-
 	ret
 	
 BlurY endp
-
-BlurPixelY proc
-	push rbx
-	push rcx
-	push rdx
-	push r8
-	push r9
-	push r10
-	
-	vxorpd ymm0, ymm0, ymm0 ; Zero ymm0 which holds the sum
-	mov rbx, data_array
-	mov rcx, kernel_array
-
-
-	pop r10
-	pop r9
-	pop r8
-	pop rdx
-	pop rcx
-	pop rbx
-	ret
-
-BlurPixelY endp
 
 NormalizeColors proc
 	

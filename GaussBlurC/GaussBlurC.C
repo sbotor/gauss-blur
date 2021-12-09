@@ -33,12 +33,11 @@ void normalizeColors(double* c) {
 
 #define ADD_COLOR_X(n, offset, kern_pos) colors[n] += src[i + 3 * offset + n] * kernel[kern_pos]
 void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
-	const int count = end - start,
-		padding = (imageStride % 4),
+	const int padding = (imageStride % 4),
 		byte_width = imageStride - padding;
 
 	int i = start;
-	while (i < start + count) {
+	while (i < end) {
 		
 		double colors[3] = { 0.0 };
 		int x = i % imageStride;
@@ -95,12 +94,11 @@ void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 
 #define ADD_COLOR_Y(n, offset, kern_offset) colors[n] += src[i + imageStride * offset + n] * kernel[kern_offset]
 void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
-	const int count = end - start,
-		padding = (imageStride % 4),
+	const int padding = (imageStride % 4),
 		byte_width = imageStride - padding;
 
 	int i = start;
-	while (i < start + count) {
+	while (i < end) {
 
 		double colors[3] = { 0.0 };
 		int y = i / imageStride;
