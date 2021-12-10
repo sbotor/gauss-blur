@@ -147,7 +147,7 @@ void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 		dest[i + 2] = colors[2];
 
 		i += 3;
-		if (i % byte_width) {
+		if (i % byte_width == 0) {
 			i += padding;
 		}
 	}
