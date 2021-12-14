@@ -88,19 +88,20 @@ BlurX proc
 		cmp rcx, r8
 		jge return
 	loop_x:
-		pmovzxbd xmm0, [rsi + rcx]
-		cvtdq2ps xmm0, xmm0
-		mulps xmm0, xmm11
+		xor rdx, rdx
+		mov rax, rcx
+		div r14
+		mov r9, rdx
 		
-		cmp rcx, 6 ; jump if i < 6
+		cmp r9, 6 ; jump if i < 6
 		jl L1?_R2?
-		cmp rcx, r10 ; jump if i > byte_width - 6
+		cmp r9, r10 ; jump if i > byte_width - 6
 		jg L2_R1?
 
 		; All 5 pixels
 		vpmovzxbd ymm2, qword ptr [rsi + rcx - 6]
-		vpmovzxbd ymm3, qword ptr [rsi + rcx + 3]
 		vcvtdq2ps ymm2, ymm2
+		vpmovzxbd ymm3, qword ptr [rsi + rcx + 3]
 		vcvtdq2ps ymm3, ymm3
 		vmulps ymm2, ymm2, ymm10
 		vmulps ymm3, ymm3, ymm13
@@ -116,9 +117,9 @@ BlurX proc
 		jmp get_colors
 
 	L1?_R2?:
-		cmp rcx, 3 ; jump if i < 3
+		cmp r9, 3 ; jump if i < 3
 		jl L0_R2?
-		cmp rcx, r10 ; jump if i < byte_width - 6
+		cmp r9, r10 ; jump if i < byte_width - 6
 		jg L1_R1?
 		
 		vpmovzxbd ymm2, qword ptr [rsi + rcx - 3]
@@ -128,16 +129,16 @@ BlurX proc
 
 		vmulps ymm2, ymm2, ymm11
 		vmulps ymm3, ymm3, ymm13
-		vaddps ymm1, ymm1, ymm2
 		
+		vaddps ymm1, ymm1, ymm2
 		vpermd ymm0, ymm14, ymm1
 		addps xmm0, xmm1
 		jmp get_colors
 
 	L0_R2?:
-		cmp rcx, r10 ; jump if i < byte_width - 6
+		cmp r9, r10 ; jump if i < byte_width - 6
 		jg L0_R1?
-		cmp rcx, r11 ; jump if i < byte_width - 3
+		cmp r9, r11 ; jump if i < byte_width - 3
 		jg middle_only
 		
 		vpmovzxbd ymm2, qword ptr [rsi + rcx + 3]
@@ -154,7 +155,7 @@ BlurX proc
 		jmp get_colors
 
 	L1_R1?:
-		cmp rcx, r11 ; jump if i < byte_width - 3
+		cmp r9, r11 ; jump if i < byte_width - 3
 		jg L1_R0
 
 		vpmovzxbd ymm2, qword ptr [rsi + rcx - 3]
@@ -181,7 +182,7 @@ BlurX proc
 		jmp get_colors
 
 	L2_R1?:
-		cmp rcx, r11 ; jump if i < byte_width - 3
+		cmp r9, r11 ; jump if i < byte_width - 3
 		jg L2_R0
 		
 		vpmovzxbd ymm2, qword ptr [rsi + rcx - 6]
@@ -212,7 +213,7 @@ BlurX proc
 		jmp get_colors
 
 	L0_R1?:
-		cmp rcx, r11 ; jump if i < byte_width - 3
+		cmp r9, r11 ; jump if i < byte_width - 3
 		jg middle_only
 		
 		vpmovzxbd ymm1, qword ptr [rsi + rcx]
