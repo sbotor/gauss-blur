@@ -8,7 +8,7 @@ namespace GaussBlur.Threading
 {
     unsafe class AsmThread : BlurThread
     {
-        public AsmThread(BlurTask task, byte* helperP, double* kernelP, int start, int end)
+        public AsmThread(BlurTask task, int start, int end)
             : base(task, start, end)
         {
             CurrentThread = new Thread(Run);

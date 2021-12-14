@@ -10,7 +10,7 @@ namespace GaussBlur.DLL
         private const string dllDir = @"..\GaussBlurAsm.dll";
 
         [DllImport(dllDir)]
-        public static extern unsafe void Init(byte* data, byte* helper, long stride, long height, double* kernel);
+        public static extern unsafe void Init(byte* data, byte* helper, long stride, long height, float* kernel);
 
         [DllImport(dllDir)]
         public static extern void BlurX(long start, long end);

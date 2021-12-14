@@ -16,11 +16,11 @@ namespace GaussBlur.DLL
         [DllImport(dllDir)]
         public static unsafe extern void BlurX(byte* data, byte* help,
             int start, int end, int imageStride, int imageHeight,
-            double* kernel);
+            float* kernel);
 
         [DllImport(dllDir)]
         public static unsafe extern void BlurY(byte* data, byte* help,
             int start, int end, int imageStride, int imageHeight,
-            double* kernel);
+            float* kernel);
     }
 }

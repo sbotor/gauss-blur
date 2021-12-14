@@ -13,6 +13,9 @@ b_width_3_less qword ?
 img_height_2_less qword ?
 img_height_1_less qword ?
 
+.data
+permutation_mask dword  3, 4, 5, 0, 0, 0, 0, 0
+
 .code
 
 Init proc
@@ -61,8 +64,12 @@ BlurX proc
 	; R13 - padding
 	; R14 - img_stride
 
+	; RSI - data_array
+	; RBX - helper_array
+
 	mov r8, rdx
-	mov rbx, data_array
+	mov rsi, data_array
+	mov rbx, helper_array
 	mov r10, b_width_6_less
 	mov r11, b_width_3_less
 	mov r12, img_byte_width
@@ -71,109 +78,176 @@ BlurX proc
 
 	; Save kernel array info
 	mov rdx, kernel_array
-	vmovupd ymm13, ymmword ptr [rdx]
-	vmovupd ymm14, ymmword ptr [rdx + 32]
-	vmovupd ymm15, ymmword ptr [rdx + 64]
+	vmovups ymm10, [rdx] ; L2-L1
+	vmovups ymm11, [rdx + 12] ; L1-C
+	vmovups ymm12, [rdx + 24] ; C-R1
+	vmovups ymm13, [rdx + 36] ; R1-R2
+	vmovdqu ymm14, ymmword ptr [permutation_mask]
 
-LOOP_X_CHECK:
-	cmp rcx, r8
-	jge RETURN
-LOOP_X:
-		mov rax, rcx
-		xor rdx, rdx
-		div r14
-		mov r9, rdx
-		vpxor ymm0, ymm0, ymm0 ; Clear ymm0 which holds the sum
-
-	THIRD_COL:
-		cmp r9, 6
-		jl SECOND_COL
-
-		pmovzxbd xmm0, dword ptr [rbx + rcx]
-		pmovzxbd xmm1, dword ptr [rbx + rcx - 3]
-		pmovzxbd xmm2, dword ptr [rbx + rcx - 6]
-
-		vcvtdq2pd ymm0, xmm0
-		vcvtdq2pd ymm1, xmm1
-		vcvtdq2pd ymm2, xmm2
-
-		vmulpd ymm0, ymm0, ymm13
-		vmulpd ymm1, ymm1, ymm14
-		vmulpd ymm2, ymm2, ymm15
-
-		vaddpd ymm1, ymm1, ymm2
-		vaddpd ymm0, ymm0, ymm1
-		jmp THIRD_TO_LAST_COL
-
-	SECOND_COL:
-		cmp r9, 3
-		jl CENTER_PIXEL_ONLY
-
-		pmovzxbd xmm0, dword ptr [rbx + rcx]
-		pmovzxbd xmm1, dword ptr [rbx + rcx - 3]
+	loop_check:
+		cmp rcx, r8
+		jge return
+	loop_x:
+		pmovzxbd xmm0, [rsi + rcx]
+		cvtdq2ps xmm0, xmm0
+		mulps xmm0, xmm11
 		
-		vcvtdq2pd ymm0, xmm0
-		vcvtdq2pd ymm1, xmm1
+		cmp rcx, 6 ; jump if i < 6
+		jl L1?_R2?
+		cmp rcx, r10 ; jump if i > byte_width - 6
+		jg L2_R1?
 
-		vmulpd ymm0, ymm0, ymm13
-		vmulpd ymm1, ymm1, ymm14
-
-		vaddpd ymm0, ymm0, ymm1
-
-		jmp THIRD_TO_LAST_COL
-
-	CENTER_PIXEL_ONLY:
-		pmovzxbd xmm0, dword ptr [rbx + rcx]
-		vcvtdq2pd ymm0, xmm0
-		vmulpd ymm0, ymm0, ymm13
-
-	THIRD_TO_LAST_COL:
-		cmp r9, r10
-		jg SECOND_TO_LAST_COL
-
-		pmovzxbd xmm1, dword ptr [rbx + rcx + 3]
-		pmovzxbd xmm2, dword ptr [rbx + rcx + 6]
-
-		vcvtdq2pd ymm1, xmm1
-		vcvtdq2pd ymm2, xmm2
-
-		vmulpd ymm1, ymm1, ymm14
-		vmulpd ymm2, ymm2, ymm15
-
-		vaddpd ymm1, ymm1, ymm2
-		vaddpd ymm0, ymm0, ymm1
-		jmp GET_COLORS
-
-	SECOND_TO_LAST_COL:
-		cmp r9, r11
-		jg GET_COLORS
+		; All 5 pixels
+		vpmovzxbd ymm2, qword ptr [rsi + rcx - 6]
+		vpmovzxbd ymm3, qword ptr [rsi + rcx + 3]
+		vcvtdq2ps ymm2, ymm2
+		vcvtdq2ps ymm3, ymm3
+		vmulps ymm2, ymm2, ymm10
+		vmulps ymm3, ymm3, ymm13
 		
-		pmovzxbd xmm1, dword ptr [rbx + rcx + 3]
-		vcvtdq2pd ymm1, xmm1
-		vmulpd ymm1, ymm1, ymm14
-		vaddpd ymm0, ymm0, ymm1
+		pmovzxbd xmm0, [rsi + rcx]
+		cvtdq2ps xmm0, xmm0
+		mulps xmm0, xmm11
+		
+		vaddps ymm1, ymm2, ymm3
+		addps xmm0, xmm1
+		vpermd ymm1, ymm14, ymm1
+		addps xmm0, xmm1
+		jmp get_colors
 
-	GET_COLORS:
-		vcvtpd2dq xmm0, ymm0
-		packusdw xmm0, xmm1
-		packuswb xmm0, xmm1
-	
-		mov rdx, helper_array
-		pextrb byte ptr [rdx + rcx], xmm0, 0
-		pextrb byte ptr [rdx + rcx + 1], xmm0, 1
-		pextrb byte ptr [rdx + rcx + 2], xmm0, 2
+	L1?_R2?:
+		cmp rcx, 3 ; jump if i < 3
+		jl L0_R2?
+		cmp rcx, r10 ; jump if i < byte_width - 6
+		jg L1_R1?
+		
+		vpmovzxbd ymm2, qword ptr [rsi + rcx - 3]
+		vpmovzxbd ymm3, qword ptr [rsi + rcx + 3]
+		vcvtdq2ps ymm2, ymm2
+		vcvtdq2ps ymm3, ymm3
 
-	LOOP_X_INC:
+		vmulps ymm2, ymm2, ymm11
+		vmulps ymm3, ymm3, ymm13
+		vaddps ymm1, ymm1, ymm2
+		
+		vpermd ymm0, ymm14, ymm1
+		addps xmm0, xmm1
+		jmp get_colors
+
+	L0_R2?:
+		cmp rcx, r10 ; jump if i < byte_width - 6
+		jg L0_R1?
+		cmp rcx, r11 ; jump if i < byte_width - 3
+		jg middle_only
+		
+		vpmovzxbd ymm2, qword ptr [rsi + rcx + 3]
+		pmovzxbd xmm0, [rsi + rcx]
+		vcvtdq2ps ymm2, ymm2
+		cvtdq2ps xmm0, xmm0
+		
+		vmulps ymm2, ymm2, ymm13
+		mulps xmm0, xmm12
+
+		vpermd ymm1, ymm14, ymm2
+		addps xmm0, xmm2
+		addps xmm0, xmm1
+		jmp get_colors
+
+	L1_R1?:
+		cmp rcx, r11 ; jump if i < byte_width - 3
+		jg L1_R0
+
+		vpmovzxbd ymm2, qword ptr [rsi + rcx - 3]
+		pmovzxbd xmm0, [rsi + rcx + 3]
+		vcvtdq2ps ymm2, ymm2
+		cvtdq2ps xmm0, xmm0
+
+		vmulps ymm2, ymm2, ymm1
+		mulps xmm0, xmm13
+
+		vpermd ymm1, ymm14, ymm2
+		addps xmm0, xmm2
+		addps xmm0, xmm1
+		jmp get_colors
+
+	L1_R0:
+		vpmovzxbd ymm1, qword ptr [rsi + rcx - 3]
+		vcvtdq2ps ymm1, ymm2
+
+		vmulps ymm1, ymm1, ymm11
+		
+		vpermd ymm0, ymm14, ymm1
+		addps xmm0, xmm1
+		jmp get_colors
+
+	L2_R1?:
+		cmp rcx, r11 ; jump if i < byte_width - 3
+		jg L2_R0
+		
+		vpmovzxbd ymm2, qword ptr [rsi + rcx - 6]
+		vpmovzxbd ymm3, qword ptr [rsi + rcx]
+		vcvtdq2ps ymm2, ymm2
+		vcvtdq2ps ymm3, ymm3
+
+		vmulps ymm2, ymm2, ymm10
+		vmulps ymm3, ymm3, ymm13
+
+		vaddps ymm1, ymm2, ymm3
+		vpermd ymm0, ymm14, ymm1
+		addps xmm0, xmm1
+		jmp get_colors
+
+	L2_R0:
+		vpmovzxbd ymm2, qword ptr [rsi + rcx - 6]
+		pmovzxbd xmm0, [rsi + rcx]
+		vcvtdq2ps ymm2, ymm2
+		cvtdq2ps xmm0, xmm0
+
+		vmulps ymm2, ymm2, ymm10
+		mulps xmm0, xmm12
+
+		vpermd ymm1, ymm14, ymm2
+		addps xmm1, xmm2
+		addps xmm0, xmm1
+		jmp get_colors
+
+	L0_R1?:
+		cmp rcx, r11 ; jump if i < byte_width - 3
+		jg middle_only
+		
+		vpmovzxbd ymm1, qword ptr [rsi + rcx]
+		vcvtdq2ps ymm1, ymm1
+
+		vmulps ymm1, ymm1, ymm12
+
+		vpermd ymm0, ymm14, ymm1
+		addps xmm0, xmm1
+		jmp get_colors
+		
+
+	middle_only:
+		pmovzxbd xmm0, [rsi + rcx]
+		cvtdq2ps xmm0, xmm0
+		mulps xmm0, xmm12
+
+	get_colors:
+		cvttps2dq xmm0, xmm0
+		packusdw xmm0, xmm0
+		packuswb xmm0, xmm0
+		pextrb byte ptr [rbx + rcx], xmm0, 0
+		pextrb byte ptr [rbx + rcx + 1], xmm0, 1
+		pextrb byte ptr [rbx + rcx + 2], xmm0, 2
+		
 		add rcx, 3
-		mov rax, rcx
 		xor rdx, rdx
-		div r12
-		cmp rdx, 0
-		jne LOOP_X_CHECK
+		mov rax, rcx
+		div r12d
+		cmp edx, 0
+		jnz loop_check
 		add rcx, r13
-		jmp LOOP_X_CHECK
+		jmp loop_check
 
-RETURN:
+return:
 	pop rsi
 	pop rbx
 	ret
@@ -182,140 +256,23 @@ BlurX endp
 
 BlurY proc
 	push rbx
-	push rsi
-
-	; RCX - startPos and loop counter
-	; R8 - endPos
-	; R9 - Y position = i / stride
-	; R10 - height - 2
-	; R11 - height - 1
-	; R12 - byte_width
-	; R13 - padding
-	; R14 - img_stride
-	; R15 - row offset
-
-	mov r8, rdx
-	mov rbx, helper_array
-	mov r10, img_height_2_less
-	mov r11, img_height_2_less
-	mov r12, img_byte_width
-	mov r13, img_padding
-	mov r14, img_stride
-
-	; Save kernel array info
-	mov rdx, kernel_array
-	vmovupd ymm13, ymmword ptr [rdx]
-	vmovupd ymm14, ymmword ptr [rdx + 32]
-	vmovupd ymm15, ymmword ptr [rdx + 64]
-
-LOOP_Y_CHECK:
-	cmp rcx, r8
-	jge RETURN
-LOOP_Y:
-		mov rax, rcx
-		xor rdx, rdx
-		div r14
-		mov r9, rax
-
-	THIRD_ROW:
-		cmp r9, 2
-		jle SECOND_ROW
-		mov r15, rcx
-		pmovzxbd xmm0, dword ptr [rbx + r15]
-		vcvtdq2pd ymm0, xmm0
-
-		sub r15, r14
-		pmovzxbd xmm1, dword ptr [rbx + r15]
-		vcvtdq2pd ymm1, xmm1
-
-		sub r15, r14
-		pmovzxbd xmm2, dword ptr [rbx + r15]
-		vcvtdq2pd ymm2, xmm2
-
-		vmulpd ymm0, ymm0, ymm13
-		vmulpd ymm1, ymm1, ymm14
-		vmulpd ymm2, ymm2, ymm15
-		vaddpd ymm1, ymm1, ymm2
-		vaddpd ymm0, ymm0, ymm1
-		jmp THIRD_TO_LAST_ROW
-
-	SECOND_ROW:
-		cmp r9, 1
-		jle CENTER_PIXEL_ONLY
-		mov r15, rcx
-
-		pmovzxbd xmm0, dword ptr [rbx + r15]
-		vcvtdq2pd ymm0, xmm0
-
-		sub r15, r14
-		pmovzxbd xmm1, dword ptr [rbx + r15]
-		vcvtdq2pd ymm1, xmm1
-
-		vmulpd ymm0, ymm0, ymm13
-		vmulpd ymm1, ymm1, ymm14
-		vaddpd ymm0, ymm0, ymm1
-		jmp THIRD_TO_LAST_ROW
-
-	CENTER_PIXEL_ONLY:
-		pmovzxbd xmm0, dword ptr [rbx + rcx]
-		vcvtdq2pd ymm0, xmm0
-		vmulpd ymm0, ymm0, ymm13
-
-	THIRD_TO_LAST_ROW:
-		cmp r9, r10
-		jge SECOND_TO_LAST_ROW
-		mov r15, rcx
-		
-		add r15, r14
-		pmovzxbd xmm1, dword ptr [rbx + rcx]
-		vcvtdq2pd ymm1, xmm1
-
-		add r15, r14
-		pmovzxbd xmm2, dword ptr [rbx + rcx]
-		vcvtdq2pd ymm2, xmm2
-
-		vmulpd ymm1, ymm1, ymm14
-		vmulpd ymm2, ymm2, ymm15
-		vaddpd ymm1, ymm1, ymm2
-		vaddpd ymm0, ymm0, ymm1
-		jmp GET_COLORS
-
-	SECOND_TO_LAST_ROW:
-		cmp r9, r11
-		jge GET_COLORS
-		mov r15, rcx
-		
-		add r15, r14
-		pmovzxbd xmm1, dword ptr [rbx + rcx]
-		vcvtdq2pd ymm1, xmm1
-		vmulpd ymm1, ymm1, ymm14
-		vaddpd ymm0, ymm0, ymm1
 	
-	GET_COLORS:
-		vcvtpd2dq xmm0, ymm0
-		packusdw xmm0, xmm1
-		packuswb xmm0, xmm1
-	
-		mov rdx, data_array
-		pextrb byte ptr [rdx + rcx], xmm0, 0
-		pextrb byte ptr [rdx + rcx + 1], xmm0, 1
-		pextrb byte ptr [rdx + rcx + 2], xmm0, 2
+	mov rsi, helper_array
+	mov r8, data_array
 
-	LOOP_Y_INC:
-		add rcx, 3
-		mov rax, rcx
-		xor rdx, rdx
-		div r12
-		cmp rdx, 0
-		jne LOOP_Y_CHECK
-		add rcx, r13
-		jmp LOOP_Y_CHECK
+	loop_check:
+		cmp rcx, rdx
+		jge return
+	loop_y:
+		mov eax, [rsi + rcx]
+		mov [r8 + rcx], eax
+		add rcx, 4
+		jmp loop_check
 
-RETURN:
-	pop rsi
+return:
 	pop rbx
 	ret
-	
+
 BlurY endp
 
 END

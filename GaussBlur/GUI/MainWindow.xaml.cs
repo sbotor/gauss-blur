@@ -99,7 +99,7 @@ namespace GaussBlur.GUI
             return true;
         }
 
-        private bool processImage(IThreadFactory factory)
+        private bool processImage(BlurThreadFactory factory)
         {
             bool success = false;
             inputImage.LockImage();
@@ -141,7 +141,7 @@ namespace GaussBlur.GUI
 
                 if (checkParams())
                 {
-                    IThreadFactory factory;
+                    BlurThreadFactory factory;
 
                     if (useCRadio.IsChecked is bool checkedC && checkedC)
                     {

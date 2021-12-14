@@ -4,39 +4,20 @@ using System.Text;
 
 namespace GaussBlur.Threading
 {
-    unsafe class CThreadFactory : IThreadFactory
+    class CThreadFactory : BlurThreadFactory
     {
-        private double[] _kernel;
-        public double[] Kernel { get => _kernel; }
-
-        public CThreadFactory(double kernelSD)
+        public CThreadFactory(double kernelSD) : base(kernelSD)
         {
-            _kernel = createKernel(kernelSD);
         }
         
-        public BlurThread Create(BlurTask task, byte* helperP, double* kernelP, int start, int end)
+        public override unsafe BlurThread Create(int start, int end)
         {
             return new CThread(task, helperP, kernelP, start, end);
         }
 
-        private static double[] createKernel(double sd)
+        public override unsafe void Init(BlurTask task, byte* helperP, float* kernelP)
         {
-            double[] kernel = new double[3];
-
-            double variance = sd * sd,
-                constance = 1 / (Math.Sqrt(2.0 * Math.PI) * sd);
-
-            kernel[2] = constance * Math.Exp(-2 / variance);
-            kernel[1] = constance * Math.Exp(-0.5 / variance);
-            kernel[0] = constance;
-
-            double kernelSum = kernel[0] + kernel[1] * 2 + kernel[2] * 2;
-
-            kernel[0] = kernel[0] / kernelSum;
-            kernel[1] = kernel[1] / kernelSum;
-            kernel[2] = kernel[2] / kernelSum;
-
-            return kernel;
+            base.Init(task, helperP, kernelP);
         }
     }
 }

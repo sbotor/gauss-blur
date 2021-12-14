@@ -1,20 +1,7 @@
 #include "pch.h"
 #include "GaussBlurC.h"
 
-const int MAX_CENT_OFF = 2;
-
-int addTest(int first, int second) {
-	return first + second;
-}
-
-void normalizeColor(double* c) {
-	if (*c > 255)
-		*c = 255;
-	else if (*c < 0)
-		*c = 0;
-}
-
-void normalizeColors(double* c) {
+void normalizeColors(float* c) {
 	if (c[0] > 255)
 		c[0] = 255;
 	else if (c[0] < 0)
@@ -32,14 +19,14 @@ void normalizeColors(double* c) {
 }
 
 #define ADD_COLOR_X(n, offset, kern_pos) colors[n] += src[i + 3 * offset + n] * kernel[kern_pos]
-void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
+void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, float* kernel) {
 	const int padding = (imageStride % 4),
 		byte_width = imageStride - padding;
 
 	int i = start;
 	while (i < end) {
 		
-		double colors[3] = { 0.0 };
+		float colors[3] = { 0.0 };
 		int x = i % imageStride;
 
 		// Third column and more: two cells to the left
@@ -95,14 +82,14 @@ void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 }
 
 #define ADD_COLOR_Y(n, offset, kern_offset) colors[n] += src[i + imageStride * offset + n] * kernel[kern_offset]
-void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, double* kernel) {
+void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, float* kernel) {
 	const int padding = (imageStride % 4),
 		byte_width = imageStride - padding;
 
 	int i = start;
 	while (i < end) {
 
-		double colors[3] = { 0.0 };
+		float colors[3] = { 0.0 };
 		int y = i / imageStride;
 
 		// Third row and more: two cells up

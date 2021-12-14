@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows;
 
 using GaussBlur.ImageProc;
 
@@ -70,7 +68,7 @@ namespace GaussBlur.Threading
             base.SignalAndWait();
         }
 
-        public void RunWorker(IThreadFactory factory, GUI.ProgressWindow progWindow)
+        public void RunWorker(BlurThreadFactory factory, GUI.ProgressWindow progWindow)
         {
             if (Worker != null)
             {
@@ -85,7 +83,7 @@ namespace GaussBlur.Threading
             Worker.DoWork += new DoWorkEventHandler(
                 delegate (object o, DoWorkEventArgs args)
                 {
-                    RunThreads(args.Argument as IThreadFactory);
+                    RunThreads(args.Argument as BlurThreadFactory);
                 });
 
             Worker.ProgressChanged += new ProgressChangedEventHandler(
@@ -104,14 +102,14 @@ namespace GaussBlur.Threading
             Worker.RunWorkerAsync(factory);
         }
         
-        public void RunThreads(IThreadFactory factory)
+        public void RunThreads(BlurThreadFactory factory)
         {
             RuntimeStopwatch = new Stopwatch();
             RuntimeStopwatch.Start();
 
             unsafe
             {
-                fixed(double* kernelP = factory.Kernel)
+                fixed(float* kernelP = factory.Kernel)
                 {
                     Clear();
                     int[] slices = Data.Slice(ThreadCount);
@@ -119,9 +117,11 @@ namespace GaussBlur.Threading
 
                     fixed (byte* helperP = helper)
                     {
+                        factory.Init(this, helperP, kernelP);
+
                         for (int i = 0; i < ThreadCount; i++)
                         {
-                            BlurThread thread = factory.Create(this, helperP, kernelP, slices[i], slices[i + 1]);
+                            BlurThread thread = factory.Create(slices[i], slices[i + 1]);
                             Threads.Add(thread);
                             thread.Start();
                         }

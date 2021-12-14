@@ -12,9 +12,9 @@ namespace GaussBlur.Threading
     {      
         private byte* helper;
 
-        private double* kernel;
+        private float* kernel;
 
-        public CThread(BlurTask task, byte* helperP, double* kernelP, int start, int end)
+        public CThread(BlurTask task, byte* helperP, float* kernelP, int start, int end)
             : base(task, start, end)
         {
             helper = helperP;
