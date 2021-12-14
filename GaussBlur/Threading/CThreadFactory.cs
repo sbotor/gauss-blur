@@ -12,7 +12,7 @@ namespace GaussBlur.Threading
         
         public override unsafe BlurThread Create(int start, int end)
         {
-            return new CThread(task, helperP, kernelP, start, end);
+            return new CThread(Task, HelperP, KernelP, start, end);
         }
 
         public override unsafe void Init(BlurTask task, byte* helperP, float* kernelP)

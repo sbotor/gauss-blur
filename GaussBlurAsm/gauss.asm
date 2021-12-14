@@ -95,19 +95,19 @@ BlurX proc
 		
 	middle:
 		pmovzxbd xmm0, [rsi + rcx]
-		cvtdq2ps xmm0, xmm0
-		mulps xmm0, xmm12
+		pmulld xmm0, xmm12
+		psrad xmm0, 8
 
 	two_left:
 		cmp r9, 6
 		jl short one_left
 
 		vpmovzxbd ymm2, qword ptr [rsi + rcx - 6]
-		vcvtdq2ps ymm2, ymm2
-		vmulps ymm2, ymm2, ymm10
+		vpmulld ymm2, ymm2, ymm10
+		vpsrad ymm2, ymm2, 8
 		vpermd ymm1, ymm14, ymm2
-		addps xmm1, xmm2
-		addps xmm0, xmm1
+		paddd xmm1, xmm2
+		paddd xmm0, xmm1
 		jmp short two_right
 
 	one_left:
@@ -115,30 +115,29 @@ BlurX proc
 		jl short two_right
 		
 		pmovzxbd xmm1, [rsi + rcx - 3]
-		cvtdq2ps xmm1, xmm1
-		mulps xmm1, xmm11
-		addps xmm0, xmm1
+		pmulld xmm1, xmm11
+		psrad xmm1, 8
+		paddd xmm0, xmm1
 
 	two_right:
 		cmp r9, r10
 		jg short one_right
 
 		vpmovzxbd ymm2, qword ptr [rsi + rcx + 3]
-		vcvtdq2ps ymm2, ymm2
-		vmulps ymm2, ymm2, ymm13
+		vpmulld ymm2, ymm2, ymm13
+		vpsrad ymm2, ymm2, 8
 		vpermd ymm1, ymm14, ymm2
-		addps xmm1, xmm2
-		addps xmm0, xmm1
+		paddd xmm1, xmm2
+		paddd xmm0, xmm1
 		jmp short get_colors
 
 	one_right:
 		pmovzxbd xmm1, [rsi + rcx - 3]
-		cvtdq2ps xmm1, xmm1
-		mulps xmm1, xmm13
-		addps xmm0, xmm1
+		pmulld xmm1, xmm13
+		psrad xmm1, 8
+		paddd xmm0, xmm1
 
 	get_colors:
-		cvttps2dq xmm0, xmm0
 		packusdw xmm0, xmm0
 		packuswb xmm0, xmm0
 		pextrb byte ptr [rbx + rcx], xmm0, 0

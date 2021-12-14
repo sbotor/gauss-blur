@@ -7,14 +7,14 @@ using GaussBlur.DLL;
 namespace GaussBlur.Threading
 {
     unsafe class AsmThreadFactory : BlurThreadFactory
-    {
+    {   
         public AsmThreadFactory(double kernelSD) : base(kernelSD)
         {
         }
 
         public override BlurThread Create(int start, int end)
         {   
-            return new AsmThread(task, start, end);
+            return new AsmThread(Task, start, end);
         }
 
         public override void Init(BlurTask task, byte* helperP, float* kernelP)
@@ -25,7 +25,15 @@ namespace GaussBlur.Threading
                 task.Data.Height, kernelP);
         }
 
-        public override float[] createKernel(double sd)
+        public override unsafe void Init(BlurTask task, byte* helperP, int* fixedPointKernelP)
+        {
+            base.Init(task, helperP, fixedPointKernelP);
+
+            AsmLib.Init(task.Data.Data, helperP, task.Data.Stride,
+                task.Data.Height, fixedPointKernelP);
+        }
+
+        public override float[] CreateKernel(double sd)
         {
             float[] kernel = new float[16];
 

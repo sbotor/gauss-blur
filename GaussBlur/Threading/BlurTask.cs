@@ -109,7 +109,8 @@ namespace GaussBlur.Threading
 
             unsafe
             {
-                fixed(float* kernelP = factory.Kernel)
+                int[] fixedPointKernel = factory.ObtainFixedPointKernel();
+                fixed(int* kernelP = factory.FixedPointKernel)
                 {
                     Clear();
                     int[] slices = Data.Slice(ThreadCount);

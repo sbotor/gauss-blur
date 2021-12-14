@@ -8,29 +8,39 @@ namespace GaussBlur.Threading
     {
         public float[] Kernel { get; protected set; }
 
-        protected BlurTask task;
-        protected byte* helperP;
-        protected float* kernelP;
+        public int[] FixedPointKernel { get; protected set; }
+
+        public BlurTask Task { get; set; }
+        public byte* HelperP { get; set; }
+        public float* KernelP { get; set; }
+        public int* FixedPointKernelP { get; set; }
 
         public BlurThreadFactory(double kernelSD)
         {
-            Kernel = createKernel(kernelSD);
+            Kernel = CreateKernel(kernelSD);
 
-            task = null;
-            helperP = null;
-            kernelP = null;
+            Task = null;
+            HelperP = null;
+            KernelP = null;
         }
 
         public abstract BlurThread Create(int start, int end);
 
         public virtual void Init(BlurTask task, byte* helperP, float* kernelP)
         {
-            this.task = task;
-            this.helperP = helperP;
-            this.kernelP = kernelP;
+            Task = task;
+            HelperP = helperP;
+            KernelP = kernelP;
         }
 
-        public virtual float[] createKernel(double sd)
+        public virtual void Init(BlurTask task, byte* helperP, int* fixedPointKernelP)
+        {
+            Task = task;
+            HelperP = helperP;
+            FixedPointKernelP = fixedPointKernelP;
+        }
+
+        public virtual float[] CreateKernel(double sd)
         {
             float[] kernel = new float[3];
 
@@ -48,6 +58,18 @@ namespace GaussBlur.Threading
             kernel[2] = kernel[2] / kernelSum;
 
             return kernel;
+        }
+
+        public int[] ObtainFixedPointKernel()
+        {
+            FixedPointKernel = new int[Kernel.Length];
+
+            for (int i = 0; i < Kernel.Length; i++)
+            {
+                FixedPointKernel[i] = (int)(Kernel[i] * 256f + 0.5f);
+            }
+
+            return FixedPointKernel;
         }
     }
 }
