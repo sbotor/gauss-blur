@@ -8,6 +8,9 @@ namespace GaussBlur.Threading
 {
     unsafe class AsmThreadFactory : BlurThreadFactory
     {   
+
+        public int* KernelP { get; private set; }
+
         public AsmThreadFactory(double kernelSD) : base(kernelSD)
         {
         }
@@ -17,28 +20,22 @@ namespace GaussBlur.Threading
             return new AsmThread(Task, start, end);
         }
 
-        public override void Init(BlurTask task, byte* helperP, float* kernelP)
+        public override void Init(BlurTask task, byte* helperP, void* kernelP)
         {
             base.Init(task, helperP, kernelP);
+
+            KernelP = (int*)kernelP;
             
             AsmLib.Init(task.Data.Data, helperP, task.Data.Stride,
                 task.Data.Height, kernelP);
         }
 
-        public override unsafe void Init(BlurTask task, byte* helperP, int* fixedPointKernelP)
-        {
-            base.Init(task, helperP, fixedPointKernelP);
-
-            AsmLib.Init(task.Data.Data, helperP, task.Data.Stride,
-                task.Data.Height, fixedPointKernelP);
-        }
-
-        public override float[] CreateKernel(double sd)
+        public override float[] CreateFloatKernel()
         {
             float[] kernel = new float[16];
 
-            double variance = sd * sd,
-                constance = 1 / (Math.Sqrt(2.0 * Math.PI) * sd);
+            double variance = KernelSD * KernelSD,
+                constance = 1 / (Math.Sqrt(2.0 * Math.PI) * KernelSD);
 
             kernel[0] = (float)(constance * Math.Exp(-2 / variance));
             kernel[3] = (float)(constance * Math.Exp(-0.5 / variance));

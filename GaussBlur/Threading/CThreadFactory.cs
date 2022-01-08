@@ -4,8 +4,10 @@ using System.Text;
 
 namespace GaussBlur.Threading
 {
-    class CThreadFactory : BlurThreadFactory
+    unsafe class CThreadFactory : BlurThreadFactory
     {
+        public float* KernelP { get; private set; }
+        
         public CThreadFactory(double kernelSD) : base(kernelSD)
         {
         }
@@ -15,9 +17,11 @@ namespace GaussBlur.Threading
             return new CThread(Task, HelperP, KernelP, start, end);
         }
 
-        public override unsafe void Init(BlurTask task, byte* helperP, float* kernelP)
+        public override unsafe void Init(BlurTask task, byte* helperP, void* kernelP)
         {
             base.Init(task, helperP, kernelP);
+
+            KernelP = (float*)kernelP;
         }
     }
 }

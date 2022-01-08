@@ -6,46 +6,32 @@ namespace GaussBlur.Threading
 {
     unsafe abstract class BlurThreadFactory
     {
-        public float[] Kernel { get; protected set; }
-
-        public int[] FixedPointKernel { get; protected set; }
-
         public BlurTask Task { get; set; }
         public byte* HelperP { get; set; }
-        public float* KernelP { get; set; }
-        public int* FixedPointKernelP { get; set; }
+
+        public double KernelSD { get; set; }
 
         public BlurThreadFactory(double kernelSD)
         {
-            Kernel = CreateKernel(kernelSD);
-
             Task = null;
             HelperP = null;
-            KernelP = null;
+            KernelSD = kernelSD;
         }
 
         public abstract BlurThread Create(int start, int end);
 
-        public virtual void Init(BlurTask task, byte* helperP, float* kernelP)
+        public virtual void Init(BlurTask task, byte* helperP, void* kernelP)
         {
             Task = task;
             HelperP = helperP;
-            KernelP = kernelP;
         }
 
-        public virtual void Init(BlurTask task, byte* helperP, int* fixedPointKernelP)
-        {
-            Task = task;
-            HelperP = helperP;
-            FixedPointKernelP = fixedPointKernelP;
-        }
-
-        public virtual float[] CreateKernel(double sd)
+        public virtual float[] CreateFloatKernel()
         {
             float[] kernel = new float[3];
 
-            double variance = sd * sd,
-                constance = 1 / (Math.Sqrt(2.0 * Math.PI) * sd);
+            double variance = KernelSD * KernelSD,
+                constance = 1 / (Math.Sqrt(2.0 * Math.PI) * KernelSD);
 
             kernel[2] = (float)(constance * Math.Exp(-2 / variance));
             kernel[1] = (float)(constance * Math.Exp(-0.5 / variance));
@@ -60,16 +46,21 @@ namespace GaussBlur.Threading
             return kernel;
         }
 
-        public int[] ObtainFixedPointKernel()
+        public int[] CreateFixedKernel()
         {
-            FixedPointKernel = new int[Kernel.Length];
+            return CreateFixedKernel(CreateFloatKernel());
+        }
 
-            for (int i = 0; i < Kernel.Length; i++)
+        public int[] CreateFixedKernel(float[] floatKernel)
+        {
+            int[] fixedKernel = new int[floatKernel.Length];
+
+            for (int i = 0; i < floatKernel.Length; i++)
             {
-                FixedPointKernel[i] = (int)(Kernel[i] * 256f + 0.5f);
+                fixedKernel[i] = (int)(floatKernel[i] * Math.Pow(2, 24) + 0.5f);
             }
 
-            return FixedPointKernel;
+            return fixedKernel;
         }
     }
 }

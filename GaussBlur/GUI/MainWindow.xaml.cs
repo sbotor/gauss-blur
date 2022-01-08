@@ -77,7 +77,7 @@ namespace GaussBlur.GUI
         {
             if (!int.TryParse(threadCountBox.Text, out threadCount)
                 && threadCount > 0 && threadCount <= 64)
-                {
+            {
                 MessageBox.Show("Invalid thread count.");
                 return false;
             }

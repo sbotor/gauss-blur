@@ -8,8 +8,8 @@ img_height qword ?
 img_padding qword ?
 img_byte_width qword ?
 
-b_width_6_less qword ?
-b_width_3_less qword ?
+stride_8_less qword ?
+stride_4_less qword ?
 img_height_2_less qword ?
 img_height_1_less qword ?
 
@@ -38,10 +38,11 @@ Init proc
 	mov img_byte_width, r8
 
 	; Calculate additional byte widths
-	sub r8, 3
-	mov b_width_3_less, r8
-	sub r8, 3
-	mov b_width_6_less, r8
+	mov rax, img_stride
+	sub rax, 4
+	mov stride_4_less, rax
+	sub rax, 4
+	mov stride_8_less, rax
 
 	; Calculate additional heights
 	sub r9, 1
@@ -58,8 +59,8 @@ BlurX proc
 	; RCX - startPos and loop counter
 	; R8 - endPos
 	; R9 - X position = i % stride
-	; R10 - byte_width - 6
-	; R11 - byte_width - 3
+	; R10 - stride - 8
+	; R11 - stride - 4
 	; R12 - byte_width
 	; R13 - padding
 	; R14 - img_stride
@@ -70,8 +71,8 @@ BlurX proc
 	mov r8, rdx
 	mov rsi, data_array
 	mov rbx, helper_array
-	mov r10, b_width_6_less
-	mov r11, b_width_3_less
+	mov r10, stride_8_less
+	mov r11, stride_4_less
 	mov r12, img_byte_width
 	mov r13, img_padding
 	mov r14, img_stride
@@ -96,7 +97,7 @@ BlurX proc
 	middle:
 		pmovzxbd xmm0, [rsi + rcx]
 		pmulld xmm0, xmm12
-		psrad xmm0, 8
+		psrad xmm0, 24
 
 	two_left:
 		cmp r9, 6
@@ -104,7 +105,7 @@ BlurX proc
 
 		vpmovzxbd ymm2, qword ptr [rsi + rcx - 6]
 		vpmulld ymm2, ymm2, ymm10
-		vpsrad ymm2, ymm2, 8
+		vpsrad ymm2, ymm2, 24
 		vpermd ymm1, ymm14, ymm2
 		paddd xmm1, xmm2
 		paddd xmm0, xmm1
@@ -116,25 +117,28 @@ BlurX proc
 		
 		pmovzxbd xmm1, [rsi + rcx - 3]
 		pmulld xmm1, xmm11
-		psrad xmm1, 8
+		psrad xmm1, 24
 		paddd xmm0, xmm1
 
 	two_right:
 		cmp r9, r10
-		jg short one_right
+		jge short one_right
 
 		vpmovzxbd ymm2, qword ptr [rsi + rcx + 3]
 		vpmulld ymm2, ymm2, ymm13
-		vpsrad ymm2, ymm2, 8
+		vpsrad ymm2, ymm2, 24
 		vpermd ymm1, ymm14, ymm2
 		paddd xmm1, xmm2
 		paddd xmm0, xmm1
 		jmp short get_colors
 
 	one_right:
-		pmovzxbd xmm1, [rsi + rcx - 3]
+		cmp r9, r11
+		jge short get_colors
+
+		pmovzxbd xmm1, [rsi + rcx + 3]
 		pmulld xmm1, xmm13
-		psrad xmm1, 8
+		psrad xmm1, 24
 		paddd xmm0, xmm1
 
 	get_colors:
@@ -147,7 +151,7 @@ BlurX proc
 		add rcx, 3
 		xor rdx, rdx
 		mov rax, rcx
-		div r12d
+		div r12
 		test edx, edx
 		jnz loop_check
 		add rcx, r13

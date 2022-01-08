@@ -109,30 +109,48 @@ namespace GaussBlur.Threading
 
             unsafe
             {
-                int[] fixedPointKernel = factory.ObtainFixedPointKernel();
-                fixed(int* kernelP = factory.FixedPointKernel)
+                if (factory is CThreadFactory)
                 {
-                    Clear();
-                    int[] slices = Data.Slice(ThreadCount);
-                    byte[] helper = new byte[Data.Length];
-
-                    fixed (byte* helperP = helper)
+                    fixed (void* kernelP = factory.CreateFloatKernel())
                     {
-                        factory.Init(this, helperP, kernelP);
-
-                        for (int i = 0; i < ThreadCount; i++)
-                        {
-                            BlurThread thread = factory.Create(slices[i], slices[i + 1]);
-                            Threads.Add(thread);
-                            thread.Start();
-                        }
-
-                        Threads.ForEach(t => t.Join());
+                        runWithKernel(factory, kernelP);
                     }
+                }
+                else if (factory is AsmThreadFactory)
+                {
+                    fixed (void* kernelP = factory.CreateFixedKernel())
+                    {
+                        runWithKernel(factory, kernelP);
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Unrecognized BlurThreadFactory instance.");
                 }
             }
 
             RuntimeStopwatch.Stop();
+        }
+
+        private unsafe void runWithKernel(BlurThreadFactory factory, void* kernelP)
+        {
+            Clear();
+            int[] slices = Data.Slice(ThreadCount);
+            byte[] helper = new byte[Data.Length];
+
+            fixed (byte* helperP = helper)
+            {
+                factory.Init(this, helperP, kernelP);
+
+                for (int i = 0; i < ThreadCount; i++)
+                {
+                    BlurThread thread = factory.Create(slices[i], slices[i + 1]);
+                    Threads.Add(thread);
+                    thread.Start();
+                }
+
+                Threads.ForEach(t => t.Join());
+            }
         }
     }
 }
