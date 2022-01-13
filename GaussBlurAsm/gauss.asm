@@ -134,22 +134,16 @@ BlurX proc
 		jge end_while
 
 		pmovzxbd xmm0, [rsi + rcx] ; Move center pixel data
-		;pmuldq xmm0, xmm3
-		;psrad xmm0, 24
 		cvtdq2ps xmm0, xmm0
 		mulps xmm0, xmm3
 		cvtps2dq xmm0, xmm0
 
 		vpmovzxbd ymm1, qword ptr [rsi + rcx - 6] ; Move first 8 bytes containing two pixels to the left
-		;vpmuldq ymm1, ymm1, ymm4
-		;vpsrad ymm1, ymm1, 24
 		vcvtdq2ps ymm1, ymm1
 		vmulps ymm1, ymm1, ymm4
 		vcvtps2dq ymm1, ymm1
 		
 		vpmovzxbd ymm2, qword ptr [rsi + rcx + 3] ; Move last 8 bytes containing two pixels to the right
-		;vpmuldq ymm2, ymm2, ymm5
-		;vpsrad ymm1, ymm1, 24
 		vcvtdq2ps ymm2, ymm2
 		vmulps ymm2, ymm2, ymm5
 		vcvtps2dq ymm2, ymm2
@@ -159,6 +153,12 @@ BlurX proc
 		paddd xmm0, xmm1
 		vpermd ymm1, ymm6, ymm1
 		paddd xmm0, xmm1
+
+		;vaddps ymm1, ymm1, ymm2
+		;addps xmm0, xmm1
+		;vpermd ymm1, ymm6, ymm1
+		;addps xmm0, xmm1
+		;cvtps2dq xmm0, xmm0
 
 	color1:
 		xor rax, rax
