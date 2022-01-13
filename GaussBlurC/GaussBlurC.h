@@ -1,13 +1,13 @@
 #ifndef GAUSSBLURC
 #define GAUSSBLURC
 
-__declspec(dllexport) int addTest(int first, int second);
+void normalizeColors(float* c);
 
-__declspec(dllexport) void normalizeColor(float* c);
-
-__declspec(dllexport) void normalizeColors(float* c);
+void addX(float* colors, int index, int pixel_off, BYTE* src, float* kernel);
 
 __declspec(dllexport) void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, float* kernel);
+
+void addY(float* colors, int index, int pixel_off, BYTE* src, float* kernel, int stride);
 
 __declspec(dllexport) void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, float* kernel);
 
