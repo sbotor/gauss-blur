@@ -245,8 +245,8 @@ BlurY proc
 
 	;---- Registers ----;
 	; R8 - end index (end)
-	; RSI - data array pointer
-	; RDI - helper array pointer
+	; RSI - helper array pointer
+	; RDI - data array pointer
 
 	; R11 - image stride
 	; R12 - image byte width
@@ -281,12 +281,9 @@ BlurY proc
 
 	; Store kernel
 	mov rbx, kernel_array
-	vmovdqu ymm4, ymmword ptr [rbx]
 	movdqu xmm3, xmmword ptr [rbx + 6 * 4]
-	vmovdqu ymm5, ymmword ptr [rbx + 9 * 4]
-
-	; Store permutation mask
-	vmovdqu	ymm6, ymmword ptr [perm_mask_x]
+	movdqu xmm4, xmmword ptr [rbx + 3 * 4]
+	movdqu xmm5, xmmword ptr [rbx]
 
 	while_loop: ; i < end
 		cmp ecx, r8d
@@ -310,14 +307,87 @@ BlurY proc
 		cmp r10d, r15d ; if (y < imageHeight - 2)
 		jge end_while
 
-		mov al, [rsi + rcx]
+		pmovzxbd xmm0, [rsi + rcx]
+		cvtdq2ps xmm0, xmm0
+		mulps xmm0, xmm3
+		cvtps2dq xmm0, xmm0
+
+		; Two pixels up
+		mov rax, rcx ; Calculate i - stride
+		sub rax, r11
+		pmovzxbd xmm1, [rsi + rax]
+		cvtdq2ps xmm1, xmm1
+		mulps xmm1, xmm4
+		
+		sub rax, r11 ; Calculate i - 2 * stride
+		pmovzxbd xmm2, [rsi + rax]
+		cvtdq2ps xmm2, xmm2
+		mulps xmm2, xmm5
+
+		cvtps2dq xmm1, xmm1 
+		cvtps2dq xmm2, xmm2
+		paddd xmm1, xmm2
+		paddd xmm0, xmm1
+
+		; Two pixels down
+		mov rax, rcx ; Calculate i + stride
+		add rax, r11
+		pmovzxbd xmm1, [rsi + rax]
+		cvtdq2ps xmm1, xmm1
+		mulps xmm1, xmm4
+		
+		add rax, r11 ; Calculate i + 2 * stride
+		pmovzxbd xmm2, [rsi + rax]
+		cvtdq2ps xmm2, xmm2
+		mulps xmm2, xmm5
+
+		cvtps2dq xmm1, xmm1 
+		cvtps2dq xmm2, xmm2
+		paddd xmm1, xmm2
+		paddd xmm0, xmm1
+
+		color1:
+		xor rax, rax
+		pextrd eax, xmm0, 0
+		cmp eax, 255
+		jg high1
+		cmp eax, 0
+		jl low1
 		mov [rdi + rcx], al
+		jmp color2
+	high1:
+		mov byte ptr [rdi + rcx], 255
+		jmp color2
+	low1:
+		mov byte ptr [rdi + rcx], 0
 
-		mov al, [rsi + rcx + 1]
+	color2:
+		pextrd eax, xmm0, 1
+		cmp eax, 255
+		jg high2
+		cmp eax, 0
+		jl low2
 		mov [rdi + rcx + 1], al
+		jmp color3
+	high2:
+		mov byte ptr [rdi + rcx + 1], 255
+		jmp color3
+	low2:
+		mov byte ptr [rdi + rcx + 1], 0
 
-		mov al, [rsi + rcx + 2]
+	color3:
+		pextrd eax, xmm0, 2
+		cmp eax, 255
+		jg high3
+		cmp eax, 0
+		jl low3
 		mov [rdi + rcx + 2], al
+		jmp end_while
+	high3:
+		mov byte ptr [rdi + rcx + 2], 255
+		jmp end_while
+	low3:
+		mov byte ptr [rdi + rcx + 2], 0
 
 	end_while:
 		add ecx, 3 ; i += 3

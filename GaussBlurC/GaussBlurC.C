@@ -50,7 +50,6 @@ void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 			addX(colors, i, 1, src, kernel);
 			addX(colors, i, 2, src, kernel);
 
-			//normalizeColors(&color1, &color2, &color3);
 			normalizeColors(colors);
 
 			dest[i] = colors[0];
