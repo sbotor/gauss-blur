@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using GaussBlur.ImageProc;
 
 namespace GaussBlur.Threading
 {
@@ -11,11 +12,15 @@ namespace GaussBlur.Threading
 
         public double KernelSD { get; set; }
 
+        public Kernel ImageKernel { get; set; }
+
         public BlurThreadFactory(double kernelSD)
         {
             Task = null;
             HelperP = null;
             KernelSD = kernelSD;
+
+            ImageKernel = new Kernel(kernelSD);
         }
 
         public abstract BlurThread Create(int start, int end);
@@ -24,43 +29,6 @@ namespace GaussBlur.Threading
         {
             Task = task;
             HelperP = helperP;
-        }
-
-        public virtual float[] CreateFloatKernel()
-        {
-            float[] kernel = new float[3];
-
-            double variance = KernelSD * KernelSD,
-                constance = 1 / (Math.Sqrt(2.0 * Math.PI) * KernelSD);
-
-            kernel[2] = (float)(constance * Math.Exp(-2 / variance));
-            kernel[1] = (float)(constance * Math.Exp(-0.5 / variance));
-            kernel[0] = (float)constance;
-
-            float kernelSum = kernel[0] + kernel[1] * 2 + kernel[2] * 2;
-
-            kernel[0] = kernel[0] / kernelSum;
-            kernel[1] = kernel[1] / kernelSum;
-            kernel[2] = kernel[2] / kernelSum;
-
-            return kernel;
-        }
-
-        public int[] CreateFixedKernel()
-        {
-            return CreateFixedKernel(CreateFloatKernel());
-        }
-
-        public int[] CreateFixedKernel(float[] floatKernel)
-        {
-            int[] fixedKernel = new int[floatKernel.Length];
-
-            for (int i = 0; i < floatKernel.Length; i++)
-            {
-                fixedKernel[i] = (int)(floatKernel[i] * Math.Pow(2, 24) + 0.5f);
-            }
-
-            return fixedKernel;
         }
     }
 }

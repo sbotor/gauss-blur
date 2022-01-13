@@ -28,9 +28,10 @@ void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 		
 		float colors[3] = { 0.0 };
 		int x = i % imageStride;
+		int y = i / imageStride;
 
-		// Third column and more: two cells to the left
-		if (x >= 6) {
+		if (x >= 6 && x <= byte_width - 6 && y > 2 && y < imageHeight - 2) {
+			// Two pixels to the left
 			ADD_COLOR_X(0, -2, 2);
 			ADD_COLOR_X(1, -2, 2);
 			ADD_COLOR_X(2, -2, 2);
@@ -38,21 +39,13 @@ void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 			ADD_COLOR_X(0, -1, 1);
 			ADD_COLOR_X(1, -1, 1);
 			ADD_COLOR_X(2, -1, 1);
-		}
-		// Second column: one cell to the left
-		else if (x >= 3) {
-			ADD_COLOR_X(0, -1, 1);
-			ADD_COLOR_X(1, -1, 1);
-			ADD_COLOR_X(2, -1, 1);
-		}
+			
+			// The pixel itself
+			ADD_COLOR_X(0, 0, 0);
+			ADD_COLOR_X(1, 0, 0);
+			ADD_COLOR_X(2, 0, 0);
 
-		// The pixel itself
-		ADD_COLOR_X(0, 0, 0);
-		ADD_COLOR_X(1, 0, 0);
-		ADD_COLOR_X(2, 0, 0);
-
-		// Third to last column and less: two cells to the right
-		if (x <= byte_width - 6) {
+			// Two pixels to the right
 			ADD_COLOR_X(0, 1, 1);
 			ADD_COLOR_X(1, 1, 1);
 			ADD_COLOR_X(2, 1, 1);
@@ -61,13 +54,8 @@ void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 			ADD_COLOR_X(1, 2, 2);
 			ADD_COLOR_X(2, 2, 2);
 		}
-		// Second to last column: one cell to the right
-		else if (x <= byte_width - 3) {
-			ADD_COLOR_X(0, 1, 1);
-			ADD_COLOR_X(1, 1, 1);
-			ADD_COLOR_X(2, 1, 1);
-		}
 
+		//normalizeColors(&color1, &color2, &color3);
 		normalizeColors(colors);
 
 		dest[i] = colors[0];
@@ -90,10 +78,11 @@ void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 	while (i < end) {
 
 		float colors[3] = { 0.0 };
+		int x = i % imageStride;
 		int y = i / imageStride;
 
-		// Third row and more: two cells up
-		if (y > 2) {
+		if (x >= 6 && x <= byte_width - 6 && y > 2 && y < imageHeight - 2) {
+			// Two pixels up
 			ADD_COLOR_Y(0, -2, 2);
 			ADD_COLOR_Y(1, -2, 2);
 			ADD_COLOR_Y(2, -2, 2);
@@ -101,21 +90,13 @@ void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 			ADD_COLOR_Y(0, -1, 1);
 			ADD_COLOR_Y(1, -1, 1);
 			ADD_COLOR_Y(2, -1, 1);
-		}
-		// Second column: one cell up
-		else if (y > 1) {
-			ADD_COLOR_Y(0, -1, 1);
-			ADD_COLOR_Y(1, -1, 1);
-			ADD_COLOR_Y(2, -1, 1);
-		}
 
-		// The pixel itself
-		ADD_COLOR_Y(0, 0, 0);
-		ADD_COLOR_Y(1, 0, 0);
-		ADD_COLOR_Y(2, 0, 0);
+			// The pixel itself
+			ADD_COLOR_Y(0, 0, 0);
+			ADD_COLOR_Y(1, 0, 0);
+			ADD_COLOR_Y(2, 0, 0);
 
-		// Third to last column and less: two cell to the right
-		if (y < imageHeight - 2) {
+			// Two pixels down
 			ADD_COLOR_Y(0, 1, 1);
 			ADD_COLOR_Y(1, 1, 1);
 			ADD_COLOR_Y(2, 1, 1);
@@ -123,12 +104,6 @@ void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 			ADD_COLOR_Y(0, 2, 2);
 			ADD_COLOR_Y(1, 2, 2);
 			ADD_COLOR_Y(2, 2, 2);
-		}
-		// Second to last column: one cell to the right
-		else if (y < imageHeight - 1) {
-			ADD_COLOR_Y(0, 1, 2);
-			ADD_COLOR_Y(1, 1, 2);
-			ADD_COLOR_Y(2, 1, 2);
 		}
 
 		normalizeColors(colors);

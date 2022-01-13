@@ -111,14 +111,14 @@ namespace GaussBlur.Threading
             {
                 if (factory is CThreadFactory)
                 {
-                    fixed (void* kernelP = factory.CreateFloatKernel())
+                    fixed (void* kernelP = factory.ImageKernel.Normalized)
                     {
                         runWithKernel(factory, kernelP);
                     }
                 }
                 else if (factory is AsmThreadFactory)
                 {
-                    fixed (void* kernelP = factory.CreateFixedKernel())
+                    fixed (void* kernelP = factory.ImageKernel.NormalizedFixed)
                     {
                         runWithKernel(factory, kernelP);
                     }

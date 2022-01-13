@@ -23,7 +23,7 @@ namespace GaussBlur.Threading
                 }
                 SignalAndWait();
 
-                AsmLib.BlurY(StartPos, EndPos);
+                //AsmLib.BlurY(StartPos, EndPos);
 
                 if (CheckIfCanceled())
                 {
