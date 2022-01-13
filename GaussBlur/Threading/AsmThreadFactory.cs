@@ -8,11 +8,11 @@ namespace GaussBlur.Threading
 {
     unsafe class AsmThreadFactory : BlurThreadFactory
     {   
-
         public int* KernelP { get; private set; }
 
         public AsmThreadFactory(double kernelSD) : base(kernelSD)
         {
+            ImageKernel = new ImageProc.AsmKernel(kernelSD);
         }
 
         public override BlurThread Create(int start, int end)

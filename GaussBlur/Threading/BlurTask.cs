@@ -118,7 +118,7 @@ namespace GaussBlur.Threading
                 }
                 else if (factory is AsmThreadFactory)
                 {
-                    fixed (void* kernelP = factory.ImageKernel.NormalizedFixed)
+                    fixed (void* kernelP = factory.ImageKernel.Normalized)
                     {
                         runWithKernel(factory, kernelP);
                     }

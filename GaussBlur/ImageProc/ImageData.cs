@@ -30,9 +30,9 @@ namespace GaussBlur.ImageProc
             {
                 return new int[2] { 0, Length };
             }
-            else if (n > 1 && n <= 64)
+            else if (n > 1)
             {
-                int fill = Width % 4,
+                int padding = Width % 4,
                     rightIntervalEndp = 0,
                     chunkSize = (Width * Height) / n,
                     remainder = (Width * Height) % n;
@@ -48,7 +48,7 @@ namespace GaussBlur.ImageProc
                         remainder--;
                     }
 
-                    indexes[i] = rightIntervalEndp * 3 + (rightIntervalEndp / Width) * fill;
+                    indexes[i] = rightIntervalEndp * 3 + (rightIntervalEndp / Width) * padding;
                 }
 
                 return indexes;
