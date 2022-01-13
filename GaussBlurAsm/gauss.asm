@@ -116,40 +116,65 @@ BlurX proc
 		cmp ecx, r8d
 		jge return
 
+		; y = i / stride
 		; x = i % stride
 		mov eax, ecx ; Move loop counter to RAX
 		xor edx, edx
 		div r11d ; Divide by stride
-		mov r10, rax ; Move the result to R10
+		mov r10d, eax ; Move the result to R10
 		mov r9d, edx ; Store remainder in R9
 
 		; if (x >= 6 && x <= byte_width - 6 && y > 2 && y < imageHeight - 2)
 		cmp r9d, 6 ; if (x >= 6)
 		jl end_while
-		cmp r9d, r11d ; if (x <= byte_width - 6) TODO: possibly can get out of bounds (check byte_width - 8 first)?
+		cmp r9d, r13d ; if (x <= byte_width - 6) TODO: possibly can get out of bounds (check byte_width - 8 first)?
 		jg end_while
 		cmp r10d, 2 ; if (y > 2)
 		jl end_while
 		cmp r10d, r15d ; if (y < imageHeight - 2)
 		jg end_while
 
+		pmovzxbd xmm0, [rsi + rcx] ; Move center pixel data
+		;cvtdq2ps xmm0, xmm0
+		;mulps xmm0, xmm3
+		pmuldq xmm0, xmm3
+		psrad xmm0, 24
+
 		vpmovzxbd ymm1, qword ptr [rsi + rcx - 6] ; Move first 8 bytes containing two pixels to the left
-		vpmuldq	ymm1, ymm1, ymm4
+		;vcvtdq2ps ymm1, ymm1
+		;vmulps ymm1, ymm1, ymm4
+		vpmuldq ymm1, ymm1, ymm4
 		vpsrad ymm1, ymm1, 24
 		
 		vpmovzxbd ymm2, qword ptr [rsi + rcx + 3] ; Move last 8 bytes containing two pixels to the right
+		;vcvtdq2ps ymm2, ymm2
+		;vmulps ymm2, ymm2, ymm5
 		vpmuldq ymm2, ymm2, ymm5
 		vpsrad ymm1, ymm1, 24
 
-		pmovzxbd xmm0, [rsi + rcx] ; Move center pixel data
-		pmuldq xmm0, xmm3
-		psrad xmm3, 24
+		;vpmovzxbd ymm1, qword ptr [rsi + rcx - 6] ; Move first 8 bytes containing two pixels to the left
+		;vpmovzxbd ymm2, qword ptr [rsi + rcx + 3] ; Move last 8 bytes containing two pixels to the right
+		;pmovzxbd xmm0, [rsi + rcx] ; Move center pixel data
+		
+		;vpmuldq	ymm1, ymm1, ymm4
+		;vpsrad ymm1, ymm1, 24
+		;vpmuldq ymm2, ymm2, ymm5
+		;vpsrad ymm1, ymm1, 24
+		;pmuldq xmm0, xmm3
+		;psrad xmm0, 24
 
 		; Add the values
 		vpaddd ymm1, ymm1, ymm2
 		paddd xmm0, xmm1
 		vpermd ymm1, ymm5, ymm1
 		paddd xmm0, xmm1
+
+		;vaddps ymm1, ymm1, ymm2
+		;addps xmm0, xmm1
+		;vpermd ymm0, ymm5, ymm1
+		;addps xmm0, xmm1
+
+		;cvtps2dq xmm0, xmm0
 
 	color1:
 		xor rax, rax
@@ -230,6 +255,36 @@ BlurY proc
 	push r14
 	push r15
 
+	;---- Arguments ----;
+	; TODO
+	;-------------------;
+
+	;---- Registers ----;
+	; R8 - end index (end)
+	; RSI - data array pointer
+	; RDI - helper array pointer
+
+	; R11 - image stride
+	; R12 - image byte width
+	; R13 - image byte width decreased by 6
+	; R14 - padding
+	; R15 - image height decreased by 2
+
+	; Main loop:
+		; RCX - loop counter (i)
+		; R9 - byte index in the current row (x)
+		; R10 - current row (y)
+
+	; XMM registers:
+		; XMM0 - center pixel data and convolution sum
+		; XMM3 - kernel data for the center pixel
+
+	; YMM registers:
+		; YMM1-YMM2 - image data for the neighbouring pixels
+		; YMM4-YMM6 - kernel data for the neighbouring pixels
+		; YMM5 - permutation mask
+	;-------------------;
+
 	mov r8, rdx ; Store end index
 	mov rdi, data_array ; Store data pointer
 	mov rsi, helper_array ; Store helper pointer
@@ -240,21 +295,31 @@ BlurY proc
 	mov r14, padding ; Store padding
 	mov r15, height_2 ; Store height - 2
 
+	; Store kernel
+	mov rbx, kernel_array
+	vmovdqu ymm4, ymmword ptr [rbx]
+	movdqu xmm3, xmmword ptr [rbx + 6 * 4]
+	vmovdqu ymm5, ymmword ptr [rbx + 9 * 4]
+
+	; Store permutation mask
+	vmovdqu	ymm5, ymmword ptr [perm_mask_x]
+
 	while_loop: ; i < end
 		cmp ecx, r8d
 		jge return
 
+		; y = i / stride
 		; x = i % stride
 		mov eax, ecx ; Move loop counter to RAX
 		xor edx, edx
 		div r11d ; Divide by stride
-		mov r10, rax ; Move the result to R10
+		mov r10d, eax ; Move the result to R10
 		mov r9d, edx ; Store remainder in R9
 
 		; if (x >= 6 && x <= byte_width - 6 && y > 2 && y < imageHeight - 2)
 		cmp r9d, 6 ; if (x >= 6)
 		jl end_while
-		cmp r9d, r11d ; if (x <= byte_width - 6) TODO: possibly can get out of bounds (check byte_width - 9 first)?
+		cmp r9d, r11d ; if (x <= byte_width - 6) TODO: possibly can get out of bounds (check byte_width - 8 first)?
 		jg end_while
 		cmp r10d, 2 ; if (y > 2)
 		jl end_while
@@ -263,16 +328,14 @@ BlurY proc
 
 		mov al, [rsi + rcx]
 		mov [rdi + rcx], al
-
 		mov al, [rsi + rcx + 1]
 		mov [rdi + rcx + 1], al
-
 		mov al, [rsi + rcx + 2]
 		mov [rdi + rcx + 2], al
 
 	end_while:
 		add ecx, 3 ; i += 3
-		; if (i % byte_width)
+		; if (i % byte_width == 0)
 		xor rdx, rdx
 		mov rax, rcx
 		div r12d

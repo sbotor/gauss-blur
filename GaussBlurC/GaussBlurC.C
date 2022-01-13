@@ -53,14 +53,14 @@ void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 			ADD_COLOR_X(0, 2, 2);
 			ADD_COLOR_X(1, 2, 2);
 			ADD_COLOR_X(2, 2, 2);
+
+			//normalizeColors(&color1, &color2, &color3);
+			normalizeColors(colors);
+
+			dest[i] = colors[0];
+			dest[i + 1] = colors[1];
+			dest[i + 2] = colors[2];
 		}
-
-		//normalizeColors(&color1, &color2, &color3);
-		normalizeColors(colors);
-
-		dest[i] = colors[0];
-		dest[i + 1] = colors[1];
-		dest[i + 2] = colors[2];
 
 		i += 3;
 		if (i % byte_width == 0) {
@@ -104,13 +104,13 @@ void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 			ADD_COLOR_Y(0, 2, 2);
 			ADD_COLOR_Y(1, 2, 2);
 			ADD_COLOR_Y(2, 2, 2);
+
+			normalizeColors(colors);
+
+			dest[i] = colors[0];
+			dest[i + 1] = colors[1];
+			dest[i + 2] = colors[2];
 		}
-
-		normalizeColors(colors);
-
-		dest[i] = colors[0];
-		dest[i + 1] = colors[1];
-		dest[i + 2] = colors[2];
 
 		i += 3;
 		if (i % byte_width == 0) {
