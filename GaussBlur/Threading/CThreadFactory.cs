@@ -10,6 +10,7 @@ namespace GaussBlur.Threading
         
         public CThreadFactory(double kernelSD) : base(kernelSD)
         {
+            UsedKernel = ImageProc.Kernel.Type.NormalizedFloat;
         }
         
         public override unsafe BlurThread Create(int start, int end)

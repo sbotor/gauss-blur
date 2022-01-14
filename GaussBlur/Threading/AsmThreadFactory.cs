@@ -13,6 +13,7 @@ namespace GaussBlur.Threading
         public AsmThreadFactory(double kernelSD) : base(kernelSD)
         {
             ImageKernel = new ImageProc.AsmKernel(kernelSD);
+            UsedKernel = ImageProc.Kernel.Type.NormalizedFixed;
         }
 
         public override BlurThread Create(int start, int end)

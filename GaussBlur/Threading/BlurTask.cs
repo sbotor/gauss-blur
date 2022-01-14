@@ -106,23 +106,47 @@ namespace GaussBlur.Threading
         {
             unsafe
             {
-                if (factory is CThreadFactory)
+                switch (factory.UsedKernel)
                 {
-                    fixed (void* kernelP = factory.ImageKernel.Normalized)
-                    {
-                        runWithKernel(factory, kernelP);
-                    }
-                }
-                else if (factory is AsmThreadFactory)
-                {
-                    fixed (void* kernelP = factory.ImageKernel.Normalized)
-                    {
-                        runWithKernel(factory, kernelP);
-                    }
-                }
-                else
-                {
-                    throw new ArgumentException("Unrecognized BlurThreadFactory instance.");
+                    case Kernel.Type.Float:
+                        {
+                            fixed (void* kernelP = factory.ImageKernel.Float)
+                            {
+                                runWithKernel(factory, kernelP);
+                            }
+                            break;
+                        }
+
+                    case Kernel.Type.NormalizedFloat:
+                        {
+                            fixed (void* kernelP = factory.ImageKernel.NormalizedFloat)
+                            {
+                                runWithKernel(factory, kernelP);
+                            }
+                            break;
+                        }
+
+                    case Kernel.Type.Fixed:
+                        {
+                            fixed (void* kernelP = factory.ImageKernel.Fixed)
+                            {
+                                runWithKernel(factory, kernelP);
+                            }
+                            break;
+                        }
+
+                    case Kernel.Type.NormalizedFixed:
+                        {
+                            fixed (void* kernelP = factory.ImageKernel.NormalizedFixed)
+                            {
+                                runWithKernel(factory, kernelP);
+                            }
+                            break;
+                        }
+
+                    case Kernel.Type.None:
+                    default:
+                        throw new ArgumentException("Unrecognized BlurFactory or kernel type unspecified.");
                 }
             }
         }

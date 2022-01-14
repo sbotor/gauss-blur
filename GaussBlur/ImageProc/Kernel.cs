@@ -6,15 +6,24 @@ namespace GaussBlur.ImageProc
 {
     class Kernel
     {
+        public enum Type
+        {
+            None,
+            Float,
+            NormalizedFloat,
+            Fixed,
+            NormalizedFixed
+        }
+
         public double SD { get; protected set; }
 
-        public float[] Normalized { get; protected set; }
+        public float[] NormalizedFloat { get; protected set; }
 
-        public float[] Raw { get; protected set; }
+        public float[] Float { get; protected set; }
 
         public int[] NormalizedFixed { get; protected set; }
 
-        public int[] RawFixed { get; protected set; }
+        public int[] Fixed { get; protected set; }
 
         public float Sum { get; protected set; }
 
@@ -54,7 +63,7 @@ namespace GaussBlur.ImageProc
 
         protected virtual void createFloatKernel()
         {
-            Raw = getKernelVals();
+            Float = getKernelVals();
         }
 
         private void calculateSum()
@@ -65,25 +74,25 @@ namespace GaussBlur.ImageProc
 
         private void calculateNormalized()
         {
-            Normalized = new float[Raw.Length];
-            NormalizedFixed = new int[RawFixed.Length];
+            NormalizedFloat = new float[Float.Length];
+            NormalizedFixed = new int[Fixed.Length];
 
-            for (int i = 0; i < Raw.Length; i++)
+            for (int i = 0; i < Float.Length; i++)
             {
-                Normalized[i] = Raw[i] / Sum;
-                NormalizedFixed[i] = FloatToFixed(Normalized[i], Precision);
+                NormalizedFloat[i] = Float[i] / Sum;
+                NormalizedFixed[i] = FloatToFixed(NormalizedFloat[i], Precision);
             }
         }
 
         private void createFixedKernel()
         {
-            int len = Raw.Length;
+            int len = Float.Length;
 
-            RawFixed = new int[len];
+            Fixed = new int[len];
 
             for (int i = 0; i < len; i++)
             {
-                RawFixed[i] = FloatToFixed(Raw[i], Precision);
+                Fixed[i] = FloatToFixed(Float[i], Precision);
             }
         }
 

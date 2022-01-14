@@ -12,15 +12,15 @@ namespace GaussBlur.ImageProc
         protected override void createFloatKernel()
         {
             float[] kernelVals = getKernelVals();
-            Raw = new float[17];
+            Float = new float[17];
 
-            Raw[0] = Raw[1] = Raw[2] =
-                Raw[12] = Raw[13] = Raw[14] = kernelVals[2];
+            Float[0] = Float[1] = Float[2] =
+                Float[12] = Float[13] = Float[14] = kernelVals[2];
 
-            Raw[3] = Raw[4] = Raw[5] = 
-                Raw[9] = Raw[10] = Raw[11] = kernelVals[1];
+            Float[3] = Float[4] = Float[5] = 
+                Float[9] = Float[10] = Float[11] = kernelVals[1];
 
-            Raw[6] = Raw[7] = Raw[8] = kernelVals[0];
+            Float[6] = Float[7] = Float[8] = kernelVals[0];
         }
     }
 }

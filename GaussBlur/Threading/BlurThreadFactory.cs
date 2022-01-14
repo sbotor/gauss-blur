@@ -14,6 +14,8 @@ namespace GaussBlur.Threading
 
         public Kernel ImageKernel { get; set; }
 
+        public Kernel.Type UsedKernel { get; protected set; }
+
         public BlurThreadFactory(double kernelSD)
         {
             Task = null;
@@ -21,6 +23,7 @@ namespace GaussBlur.Threading
             KernelSD = kernelSD;
 
             ImageKernel = new Kernel(kernelSD);
+            UsedKernel = Kernel.Type.None;
         }
 
         public abstract BlurThread Create(int start, int end);
