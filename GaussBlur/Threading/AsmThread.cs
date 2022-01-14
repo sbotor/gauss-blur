@@ -1,5 +1,5 @@
 ﻿using System.Threading;
-using GaussBlur.DLL;
+using GaussBlur.Libraries;
 
 namespace GaussBlur.Threading
 {

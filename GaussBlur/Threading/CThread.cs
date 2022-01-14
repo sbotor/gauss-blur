@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading;
 
 using GaussBlur.ImageProc;
-using GaussBlur.DLL;
+using GaussBlur.Libraries;
 
 namespace GaussBlur.Threading
 {

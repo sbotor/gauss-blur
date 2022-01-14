@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Runtime.InteropServices;
 
-namespace GaussBlur.DLL
+namespace GaussBlur.Libraries
 {
     class AsmLib
     {

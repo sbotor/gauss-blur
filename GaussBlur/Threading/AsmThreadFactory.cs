@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-using GaussBlur.DLL;
+using GaussBlur.Libraries;
 
 namespace GaussBlur.Threading
 {

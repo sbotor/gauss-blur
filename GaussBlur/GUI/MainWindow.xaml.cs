@@ -9,7 +9,6 @@ using Microsoft.Win32;
 
 using GaussBlur.ImageProc;
 using GaussBlur.Threading;
-using GaussBlur.DLL;
 
 namespace GaussBlur.GUI
 {

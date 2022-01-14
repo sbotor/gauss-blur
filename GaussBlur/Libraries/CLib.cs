@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Runtime.InteropServices;
 
-namespace GaussBlur.DLL
+namespace GaussBlur.Libraries
 {
     class CLib
     {
-        //private const string dllDir = @"D:\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\x64\Debug\GaussBlurC.dll";
         private const string dllDir = @"..\GaussBlurC.dll";
 
         [DllImport(dllDir)]
