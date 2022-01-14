@@ -11,7 +11,7 @@ namespace GaussBlur.Threading
 
         public int EndPos { get; protected set; }
         
-        public Thread CurrentThread { get; protected set; }
+        public Thread BoundThread { get; protected set; }
 
         public BlurTask Task { get; protected set; }
         
@@ -21,7 +21,7 @@ namespace GaussBlur.Threading
             EndPos = end;
             Task = task;
 
-            CurrentThread = new Thread(Run);
+            BoundThread = new Thread(Run);
         }
 
         protected abstract void Run();
@@ -43,12 +43,12 @@ namespace GaussBlur.Threading
 
         public virtual void Start()
         {
-            CurrentThread.Start();
+            BoundThread.Start();
         }
 
         public virtual void Join()
         {
-            CurrentThread.Join();
+            BoundThread.Join();
         }
     }
 }

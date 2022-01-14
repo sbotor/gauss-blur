@@ -6,11 +6,9 @@ using GaussBlur.Libraries;
 
 namespace GaussBlur.Threading
 {
-
-
-    unsafe class AsmThreadFactory : YMMAsmThreadFactory
+    unsafe class AsmFactory : XMMAsmFactory
     {
-        public AsmThreadFactory(double kernelSD) : base(kernelSD)
+        public AsmFactory(double kernelSD) : base(kernelSD)
         {
         }
     }

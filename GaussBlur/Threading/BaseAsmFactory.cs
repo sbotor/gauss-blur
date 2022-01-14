@@ -6,7 +6,7 @@ using GaussBlur.Libraries;
 
 namespace GaussBlur.Threading
 {
-    abstract unsafe class BaseAsmThreadFactory : BlurThreadFactory
+    abstract unsafe class BaseAsmFactory : ThreadFactory
     {
         public int* KernelP { get; private set; }
 
@@ -14,11 +14,8 @@ namespace GaussBlur.Threading
         
         public Action<long, long>? BlurY { get; protected set; }
 
-        public BaseAsmThreadFactory(double kernelSD) : base(kernelSD)
+        public BaseAsmFactory(double kernelSD) : base(kernelSD)
         {
-            ImageKernel = new ImageProc.AsmKernel(kernelSD);
-            UsedKernel = ImageProc.Kernel.Type.NormalizedFixed;
-
             BlurX = null;
             BlurY = null;
         }

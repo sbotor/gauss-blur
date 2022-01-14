@@ -4,13 +4,13 @@ using System.Text;
 
 namespace GaussBlur.Threading
 {
-    unsafe class CThreadFactory : BlurThreadFactory
+    unsafe class CFactory : ThreadFactory
     {
         public float* KernelP { get; private set; }
         
-        public CThreadFactory(double kernelSD) : base(kernelSD)
+        public CFactory(double kernelSD) : base(kernelSD)
         {
-            UsedKernel = ImageProc.Kernel.Type.NormalizedFloat;
+            KernelType = ImageProc.Kernel.Type.NormalizedFloat;
         }
         
         public override unsafe BlurThread Create(int start, int end)

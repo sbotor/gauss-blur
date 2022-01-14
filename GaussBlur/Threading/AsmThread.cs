@@ -6,9 +6,9 @@ namespace GaussBlur.Threading
 {
     unsafe class AsmThread : BlurThread
     {
-        public BaseAsmThreadFactory? Factory { get; protected set; }
+        public BaseAsmFactory? Factory { get; protected set; }
 
-        public AsmThread(BlurTask task, BaseAsmThreadFactory factory, int start, int end)
+        public AsmThread(BlurTask task, BaseAsmFactory factory, int start, int end)
             : base(task, start, end)
         {
             Factory = factory;

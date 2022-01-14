@@ -15,12 +15,12 @@ namespace GaussBlur.Threading
         private float* kernel;
 
         public CThread(BlurTask task, byte* helperP, float* kernelP, int start, int end)
-            : base(task, null, start, end)
+            : base(task, start, end)
         {
             helper = helperP;
             kernel = kernelP;
             
-            CurrentThread = new Thread(Run);
+            BoundThread = new Thread(Run);
         }
 
         protected override void Run()

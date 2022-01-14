@@ -89,13 +89,13 @@ namespace GaussBlur.Testing
         public List<TestResult> TestC()
         {
             testedC = true;
-            return test(new CThreadFactory(KernelSD), "C");
+            return test(new CFactory(KernelSD), "C");
         }
 
         public List<TestResult> TestAsm()
         {
             testedAsm = true;
-            return test(new AsmThreadFactory(KernelSD), "Asm");
+            return test(new AsmFactory(KernelSD), "Asm");
         }
 
         public void Clear()
@@ -106,7 +106,7 @@ namespace GaussBlur.Testing
             testedAsm = false;
         }
 
-        public List<TestResult> test(BlurThreadFactory factory, string type)
+        public List<TestResult> test(ThreadFactory factory, string type)
         {
             List<TestResult> results = new List<TestResult>(TestCount);
 
