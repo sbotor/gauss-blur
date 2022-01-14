@@ -18,7 +18,7 @@ namespace GaussBlur.Testing
 
         public int ImageWidth { get; private set; }
 
-        public int ThreadCount { get; set; }
+        public int[] ThreadCounts { get; set; }
 
         public int RepeatCount { get; set; }
 
@@ -32,18 +32,18 @@ namespace GaussBlur.Testing
         {
             get
             {
-                string prefix = "";
+                string prefix = "test_";
                 if (testedC)
                 {
-                    prefix = prefix + "C_";
+                    prefix += "C_";
                 }
                 if (testedAsm)
                 {
-                    prefix = prefix + "Asm_";
+                    prefix += "Asm_";
                 }
 
                 string now = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
-                return $"{prefix}test_X{TestCount}_T{ThreadCount}_R{RepeatCount}_{ImageWidth}x{ImageHeight}_{now}.csv";
+                return $"{prefix}X{TestCount}_R{RepeatCount}_{ImageWidth}x{ImageHeight}_{now}.csv";
             }
         }
 
@@ -51,10 +51,10 @@ namespace GaussBlur.Testing
 
         private bool testedAsm;
 
-        public ImageTest(string filename, int testCount, int threadCount, int repeatCount)
+        public ImageTest(string filename, int testCount, int[] threadCounts, int repeatCount)
         {
             TestCount = testCount;
-            ThreadCount = threadCount;
+            ThreadCounts = threadCounts;
             RepeatCount = repeatCount;
 
             Image = new ImageContainer();
@@ -75,6 +75,10 @@ namespace GaussBlur.Testing
 
             Clear();
         }
+
+        public ImageTest(string filename, int testCount, int threadCount, int repeatCount)
+            : this(filename, testCount, new int[] { threadCount }, repeatCount)
+        { }
 
         public ImageTest(string filename, int testCount) : this(filename, testCount, 1, 1)
         { }
@@ -107,15 +111,18 @@ namespace GaussBlur.Testing
             List<TestResult> results = new List<TestResult>(TestCount);
 
             Image.LockImage();
-            BlurTask task = new BlurTask(Image.ImageData, ThreadCount, RepeatCount);
-
-            for (int i = 0; i < TestCount; i++)
+            foreach (int threads in ThreadCounts)
             {
-                task.Clear();
-                task.Run(factory);
+                BlurTask task = new BlurTask(Image.ImageData, threads, RepeatCount);
 
-                TimeSpan time = task.RuntimeStopwatch.Elapsed;
-                results.Add(new TestResult(time, type, this));
+                for (int i = 0; i < TestCount; i++)
+                {
+                    task.Clear();
+                    task.Run(factory);
+
+                    TimeSpan time = task.RuntimeStopwatch.Elapsed;
+                    results.Add(new TestResult(time, type, this, threads));
+                }
             }
             Image.UnlockImage();
 

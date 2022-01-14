@@ -23,9 +23,9 @@ namespace GaussBlur.Testing
             Type = type;
         }
 
-        public TestResult(TimeSpan time, string type, ImageTest test) : this(time, type)
+        public TestResult(TimeSpan time, string type, ImageTest test, int threadCount) : this(time, type)
         {
-            ThreadCount = test.ThreadCount;
+            ThreadCount = threadCount;
             ImageWidth = test.ImageWidth;
             ImageHeight = test.ImageHeight;
         }

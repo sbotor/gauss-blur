@@ -34,7 +34,7 @@ namespace GaussBlur
                     Console.WriteLine("Preparing tests.");
                     Console.WriteLine(parser.GetInfo() + "\n");
                     ImageTest test = new ImageTest(parser.InpDir, parser.TestCount,
-                        parser.ThreadCount, parser.RepeatCount);
+                        parser.ThreadCounts, parser.RepeatCount);
 
                     if (parser.TestC)
                     {
