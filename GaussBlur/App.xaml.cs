@@ -19,7 +19,7 @@ namespace GaussBlur
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             string[] args = e.Args;
-            int testIndex = Array.IndexOf(args, "--test");
+            int testIndex = Array.IndexOf(args, "test");
             if (testIndex != -1)
             {
                 try
