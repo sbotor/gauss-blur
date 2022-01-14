@@ -83,7 +83,7 @@ namespace GaussBlur.Threading
             Worker.DoWork += new DoWorkEventHandler(
                 delegate (object o, DoWorkEventArgs args)
                 {
-                    RunThreads(args.Argument as BlurThreadFactory);
+                    Run(args.Argument as BlurThreadFactory);
                 });
 
             Worker.ProgressChanged += new ProgressChangedEventHandler(
@@ -102,11 +102,8 @@ namespace GaussBlur.Threading
             Worker.RunWorkerAsync(factory);
         }
         
-        public void RunThreads(BlurThreadFactory factory)
+        public void Run(BlurThreadFactory factory)
         {
-            RuntimeStopwatch = new Stopwatch();
-            RuntimeStopwatch.Start();
-
             unsafe
             {
                 if (factory is CThreadFactory)
@@ -128,8 +125,6 @@ namespace GaussBlur.Threading
                     throw new ArgumentException("Unrecognized BlurThreadFactory instance.");
                 }
             }
-
-            RuntimeStopwatch.Stop();
         }
 
         private unsafe void runWithKernel(BlurThreadFactory factory, void* kernelP)
@@ -137,6 +132,9 @@ namespace GaussBlur.Threading
             Clear();
             int[] slices = Data.Slice(ThreadCount);
             byte[] helper = new byte[Data.Length];
+
+            RuntimeStopwatch = new Stopwatch();
+            RuntimeStopwatch.Start();
 
             fixed (byte* helperP = helper)
             {
@@ -151,6 +149,8 @@ namespace GaussBlur.Threading
 
                 Threads.ForEach(t => t.Join());
             }
+
+            RuntimeStopwatch.Stop();
         }
     }
 }

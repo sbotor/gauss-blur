@@ -2,6 +2,7 @@
   "profiles": {
     "GaussBlur": {
       "commandName": "Project",
+      "commandLineArgs": "--test \"C:\\Users\\sotor\\OneDrive - Politechnika Śląska\\Studia\\JA\\gauss-blur\\aei.jpg\" --count 10 --threads 12 --repeats 10 -o \"C:\\Users\\sotor\\OneDrive - Politechnika Śląska\\Studia\\JA\\gauss-blur\"",
       "nativeDebugging": true
     }
   }

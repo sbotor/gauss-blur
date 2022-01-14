@@ -176,7 +176,7 @@ namespace GaussBlur.GUI
         
         private void loadInpPreview(string inpDir)
         {
-            inpImagePreview.Source = inputImage.LoadImage(inpDir);
+            inpImagePreview.Source = inputImage.LoadBitmapSource(inpDir);
         }
         
         private void loadOutPreview(string outDir)

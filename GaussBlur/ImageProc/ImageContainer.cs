@@ -8,7 +8,7 @@ using System.Windows.Media.Imaging;
 
 namespace GaussBlur.ImageProc
 {
-    class ImageContainer
+    class ImageContainer : IDisposable
     {
         public System.Drawing.Imaging.BitmapData? ImageData { get; private set; }
 
@@ -24,8 +24,8 @@ namespace GaussBlur.ImageProc
         {
             cleanup();
         }
-
-        public BitmapSource LoadImage(string inputDir)
+        
+        public void LoadImage(string inputDir)
         {
             try
             {
@@ -45,17 +45,6 @@ namespace GaussBlur.ImageProc
                         cleanup();
                         throw new ArgumentException("The image format is not supported");
                     }
-
-                    LockImage();
-                    BitmapSource src = BitmapSource.Create(
-                        BoundImage.Width, ImageData.Height,
-                        BoundImage.HorizontalResolution, BoundImage.VerticalResolution,
-                        System.Windows.Media.PixelFormats.Bgr24, null,
-                        ImageData.Scan0, ImageData.Stride * ImageData.Height,
-                        ImageData.Stride);
-                    UnlockImage();
-
-                    return src;
                 }
                 else
                 {
@@ -75,11 +64,30 @@ namespace GaussBlur.ImageProc
             }
         }
 
+        public BitmapSource LoadBitmapSource(string inputDir)
+        {
+            LoadImage(inputDir);
+            
+            LockImage();
+            BitmapSource src = BitmapSource.Create(
+                BoundImage.Width, ImageData.Height,
+                BoundImage.HorizontalResolution, BoundImage.VerticalResolution,
+                System.Windows.Media.PixelFormats.Bgr24, null,
+                ImageData.Scan0, ImageData.Stride * ImageData.Height,
+                ImageData.Stride);
+            UnlockImage();
+
+            return src;
+        }
+
         public void Save(string fileDir)
         {
             using (FileStream outStream = File.Open(fileDir, FileMode.OpenOrCreate))
             {
-                BoundImage.Save(outStream, BoundImage.RawFormat);
+                if (BoundImage != null)
+                {
+                    BoundImage.Save(outStream, BoundImage.RawFormat);
+                }
             } 
         }
 
@@ -106,10 +114,13 @@ namespace GaussBlur.ImageProc
 
         public void LockImage()
         {
-            ImageData = BoundImage.LockBits(
-                            new Rectangle(0, 0, BoundImage.Width, BoundImage.Height),
-                            System.Drawing.Imaging.ImageLockMode.ReadWrite,
-                            BoundImage.PixelFormat);
+            if (BoundImage != null)
+            {
+                ImageData = BoundImage.LockBits(
+                                new Rectangle(0, 0, BoundImage.Width, BoundImage.Height),
+                                System.Drawing.Imaging.ImageLockMode.ReadWrite,
+                                BoundImage.PixelFormat);
+            }
         }
         
         public void UnlockImage()
@@ -166,6 +177,11 @@ namespace GaussBlur.ImageProc
                 default:
                     throw new ArgumentException();
             }
+        }
+
+        public void Dispose()
+        {
+            cleanup();
         }
     }
 }
