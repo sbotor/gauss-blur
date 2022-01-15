@@ -147,35 +147,39 @@ BlurX proc
 		cvtdq2ps xmm0, xmm0 ; Convert to floats
 		mulps xmm0, xmm3 ; Multiply with kernel
 
-		; Leftmost pixel
-		pmovzxbd xmm1, [rsi + rcx - 6] ; Store data
-		cvtdq2ps xmm1, xmm1 ; Convert to floats
-		mulps xmm1, xmm5 ; Multiply with kernel
-
-		; Add
+		; One pixel to the left
 		pmovzxbd xmm2, [rsi + rcx - 3]
 		cvtdq2ps xmm2, xmm2
 		mulps xmm2, xmm4
 
+		; Leftmost pixel
+		pmovzxbd xmm1, [rsi + rcx - 6]
+		cvtdq2ps xmm1, xmm1
+		mulps xmm1, xmm5
+
+		; Add left pixels
 		addps xmm1, xmm2
 		addps xmm0, xmm1
 
+		; One pixel to the right
 		pmovzxbd xmm1, [rsi + rcx + 3]
 		cvtdq2ps xmm1, xmm1
 		mulps xmm1, xmm4
 
+		; Rightmost pixel
 		pmovzxbd xmm2, [rsi + rcx + 6]
 		cvtdq2ps xmm2, xmm2
 		mulps xmm2, xmm5
 
+		; Add right pixels
 		addps xmm1, xmm2
 		addps xmm0, xmm1
-		cvtps2dq xmm0, xmm0
+		cvtps2dq xmm0, xmm0 ; Convert back to dwords
 
 		;--- Extract colors ----;
 		xor rax, rax
 	
-	color1: ; Extract color 1
+	color1: ; Extract color 1 as dword
 		pextrd eax, xmm0, 0
 		
 		; Ensure that the color value is in the byte range, saturate otherwise
@@ -183,7 +187,7 @@ BlurX proc
 		jg high1
 		cmp eax, 0 ; Check if low
 		jl low1
-		mov [rdi + rcx], al ; Value OK
+		mov [rdi + rcx], al ; Value OK, move lowest 8 bits
 		jmp color2
 	high1: ; Value too high, use 255
 		mov byte ptr [rdi + rcx], 255
@@ -330,45 +334,55 @@ BlurY proc
 		jge return
 
 		;---- Calculate ----;
-		pmovzxbd xmm0, [rsi + rcx]
-		cvtdq2ps xmm0, xmm0
-		mulps xmm0, xmm3
+		pmovzxbd xmm0, [rsi + rcx] ; Move pixel data to XMM, ignore byte 3
+		cvtdq2ps xmm0, xmm0 ; Convert to floats
+		mulps xmm0, xmm3 ; Multiply by kernel data
 
-		; Two pixels up
-		mov rax, rcx ; Calculate i - stride
-		sub rax, r10
+		; Top pixels
+		mov rax, rcx 
+		sub rax, r10 ; Calculate i - stride to find pixel to the top
+		
+		; Multiply the pixel data
 		pmovzxbd xmm1, [rsi + rax]
 		cvtdq2ps xmm1, xmm1
 		mulps xmm1, xmm4
 		
-		sub rax, r10 ; Calculate i - 2 * stride
+		sub rax, r10 ; Calculate i - 2 * stride to find pixel two rows up
+		
+		; Multiply the pixel data
 		pmovzxbd xmm2, [rsi + rax]
 		cvtdq2ps xmm2, xmm2
 		mulps xmm2, xmm5
 
+		; Add top pixels to the sum
 		addps xmm1, xmm2
 		addps xmm0, xmm1
 
-		; Two pixels down
-		mov rax, rcx ; Calculate i + stride
-		add rax, r10
+		; Bottom pixels
+		mov rax, rcx 
+		add rax, r10 ; Calculate i + stride to find one pixel down
+
+		; Multiply the pixel data
 		pmovzxbd xmm1, [rsi + rax]
 		cvtdq2ps xmm1, xmm1
 		mulps xmm1, xmm4
 		
-		add rax, r10 ; Calculate i + 2 * stride
+		add rax, r10 ; Calculate i + 2 * stride to find pixel two rows down
+		
+		; Multiply the pixel data
 		pmovzxbd xmm2, [rsi + rax]
 		cvtdq2ps xmm2, xmm2
 		mulps xmm2, xmm5
 
+		; Add bottom pixels to the sum
 		addps xmm1, xmm2
 		addps xmm0, xmm1
-		cvtps2dq xmm0, xmm0
+		cvtps2dq xmm0, xmm0 ; Convert to dwords
 
 		;--- Extract colors ----;
 		xor rax, rax
 	
-	color1: ; Extract color 1
+	color1: ; Extract color 1 as dword
 		pextrd eax, xmm0, 0
 		
 		; Ensure that the color value is in the byte range, saturate otherwise
@@ -376,7 +390,7 @@ BlurY proc
 		jg high1
 		cmp eax, 0 ; Check if low
 		jl low1
-		mov [rdi + rcx], al ; Value OK
+		mov [rdi + rcx], al ; Value OK, move lowest 8 bits
 		jmp color2
 	high1: ; Value too high, use 255
 		mov byte ptr [rdi + rcx], 255

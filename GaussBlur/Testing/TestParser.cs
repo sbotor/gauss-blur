@@ -92,11 +92,11 @@ namespace GaussBlur.Testing
                     OutDir = Args[++i];
                     break;
 
-                case "-C":
+                case "-A":
                     TestAsm = true;
                     break;
 
-                case "-A":
+                case "-C":
                     TestC = true;
                     break;
 
