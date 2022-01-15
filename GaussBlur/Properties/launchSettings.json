@@ -2,7 +2,7 @@
   "profiles": {
     "GaussBlur": {
       "commandName": "Project",
-      "commandLineArgs": "test \"C:\\Users\\sotor\\OneDrive - Politechnika Śląska\\Studia\\JA\\gauss-blur\\aei.jpg\" -o \"C:\\Users\\sotor\\OneDrive - Politechnika Śląska\\Studia\\JA\\gauss-blur\" --threads [1,4,8,12,16,20,24,32,64] --repeats 20 --count 10",
+      "commandLineArgs": "\"C:\\Users\\sotor\\OneDrive - Politechnika Śląska\\Studia\\JA\\gauss-blur\\aei.jpg\" -o \"C:\\Users\\sotor\\OneDrive - Politechnika Śląska\\Studia\\JA\\gauss-blur\" --threads [1,4,8,12,16,20,24,32,64] --repeats 20 --count 10",
       "nativeDebugging": true
     }
   }

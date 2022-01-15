@@ -30,7 +30,7 @@ void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 		int x = i % imageStride;
 		int y = i / imageStride;
 
-		if (x >= 6 && x <= byte_width - 6 && y > 2 && y < imageHeight - 2) {
+		if (x >= 6 && x <= byte_width - 6 && y > 1 && y < imageHeight - 2) {
 			// Two pixels to the left
 			ADD_COLOR_X(0, -2, 2);
 			ADD_COLOR_X(1, -2, 2);
@@ -80,7 +80,7 @@ void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 		int x = i % imageStride;
 		int y = i / imageStride;
 
-		if (x >= 6 && x <= byte_width - 6 && y > 2 && y < imageHeight - 2) {
+		if (x >= 6 && x <= byte_width - 6 && y > 1 && y < imageHeight - 2) {
 			// Two pixels up
 			ADD_COLOR_Y(0, -2, 2);
 			ADD_COLOR_Y(1, -2, 2);

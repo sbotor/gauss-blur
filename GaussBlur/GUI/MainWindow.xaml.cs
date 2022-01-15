@@ -16,7 +16,7 @@ namespace GaussBlur.GUI
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
-    {
+    {   
         private double stdDev = 1;
         private int threadCount = 1;
         private int repeatCount = 1;
@@ -35,8 +35,6 @@ namespace GaussBlur.GUI
             
             inpFilenameBox.Text = inpFileDir;
             outFilenameBox.Text = outFileDir;
-
-            useAsmRadio.IsChecked = true;
 
             inputImage = new ImageContainer();
 
@@ -113,7 +111,7 @@ namespace GaussBlur.GUI
                 }
                 finally
                 {
-                    if (blurTask.Worker != null && blurTask.Worker.IsBusy || !blurTask.Finished)
+                    if (blurTask.Worker != null && (blurTask.Worker.IsBusy || !blurTask.Finished))
                     {
                         blurTask.Worker.CancelAsync();
                     }
@@ -140,23 +138,14 @@ namespace GaussBlur.GUI
 
                 if (checkParams())
                 {
-                    ThreadFactory factory;
-
-                    if (useCRadio.IsChecked is bool checkedC && checkedC)
+                    ThreadFactory? factory = getFactory();
+                    if (factory == null)
                     {
-                        factory = new CFactory(stdDev);
-                    }
-                    else if (useAsmRadio.IsChecked is bool checkedAsm && checkedAsm)
-                    {
-                        factory = new AsmFactory(stdDev);
-                    }
-                    else
-                    {
-                        MessageBox.Show("Choose a library before starting.");
+                        MessageBox.Show("No library chosen.");
                         return;
                     }
 
-                    if (processImage(factory))
+                    if (processImage(factory!))
                     {
                         inputImage.Save(outDir);
                         loadOutPreview(outDir);
@@ -173,6 +162,24 @@ namespace GaussBlur.GUI
             }
         }
         
+        private ThreadFactory? getFactory()
+        {
+            switch (libraryBox.SelectedIndex)
+            {
+                case 0:
+                    return new CFactory(stdDev);
+
+                case 1:
+                    return new XMMAsmFactory(stdDev);
+
+                case 2:
+                    return new YMMAsmFactory(stdDev);
+                
+                default:
+                    return null;
+            }
+        }
+
         private void loadInpPreview(string inpDir)
         {
             inpImagePreview.Source = inputImage.LoadBitmapSource(inpDir);

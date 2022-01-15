@@ -17,9 +17,19 @@ perm_mask_x dword 3, 4, 5, 0, 0, 0, 0, 0  ; Mask for moving 3-5 bytes to 0-3 in 
 .code
 
 Init proc
-
+	
 	;---- Arguments ----;
-	; TODO
+	; RCX - data array pointer
+	; RDX - helper array pointer
+	; R8 - image stride in bytes (int64)
+	; R9 - image height in pixels
+	; Stack:
+		; 40 - kernel array pointer
+	;-------------------;
+
+	;---- Registers ----;
+	; RCX - used as a helper register
+	; RDX - used during division
 	;-------------------;
 
 	mov data_array, rcx ; Image data array ptr
@@ -30,25 +40,26 @@ Init proc
 	mov kernel_array, rcx ; Kernel array ptr
 
 	; Calculate padding (stride % 4)
-	mov rax, r8
+	mov rax, r8 ; Store stride
 	xor rdx, rdx
-	mov r10, 4
-	div r10
-	mov padding, rdx
+	mov rcx, 4
+	div rcx ; stride / 4
+	mov padding, rdx ; Store remainder
 
 	; Calculate byte width (stride - padding)
-	sub r8, rdx
+	sub r8, rdx ; padding in RDX, stride in R8
 	mov byte_width, r8
 
 	; Calculate additional byte widths
-	sub r8, 6
+	sub r8, 6 ; R8 holds byte_width, subtract 6 to get image width without the last two pixels
 	mov byte_width_6, r8
 
 	; Calculate img_height - 2
-	sub r9, 2
+	sub r9, 2 ; R9 holds image height, subtract 2 to get image height without the last two pixels
 	mov height_2, r9
 
 	ret
+
 Init endp
 
 BlurX proc
@@ -60,10 +71,10 @@ BlurX proc
 	push r12
 	push r13
 	push r14
-	push r15
 
 	;---- Arguments ----;
-	; TODO
+	; RCX - start index (int64)
+	; RDX - end index (int64)
 	;-------------------;
 
 	;---- Registers ----;
@@ -71,36 +82,36 @@ BlurX proc
 	; RSI - data array pointer
 	; RDI - helper array pointer
 
-	; R11 - image stride
-	; R12 - image byte width
-	; R13 - image byte width decreased by 6
-	; R14 - padding
-	; R15 - image height decreased by 2
+	; R10 - image stride
+	; R11 - image byte width
+	; R12 - image byte width decreased by 6
+	; R13 - padding
+	; R14 - image height decreased by 2
 
 	; Main loop:
 		; RCX - loop counter (i)
-		; R9 - byte index in the current row (x)
-		; R10 - current row (y)
+		; RDX - byte index in the current row (x)
+		; R9 - current row (y)
 
 	; XMM registers:
 		; XMM0 - center pixel data and convolution sum
+		; XMM1 - leftmost or rightmost pixel data
+		; XMM2 - data for pixel to the left or right of the center
+		
 		; XMM3 - kernel data for the center pixel
-
-	; YMM registers:
-		; YMM1-YMM2 - image data for the neighbouring pixels
-		; YMM4-YMM5 - kernel data for the neighbouring pixels
-		; YMM6 - permutation mask
+		; XMM4 - kernel data for the left and right pixels
+		; XMM5 - kernel data for the leftmost and rightmost pixels
 	;-------------------;
 
 	mov r8, rdx ; Store end index
 	mov rsi, data_array ; Store data pointer
 	mov rdi, helper_array ; Store helper pointer
 
-	mov r11, stride ; Store image stride
-	mov r12, byte_width ; Store byte width
-	mov r13, byte_width_6 ; Store byte_width - 6
-	mov r14, padding ; Store padding
-	mov r15, height_2 ; Store height - 2
+	mov r10, stride ; Store image stride
+	mov r11, byte_width ; Store byte width
+	mov r12, byte_width_6 ; Store byte_width - 6
+	mov r13, padding ; Store padding
+	mov r14, height_2 ; Store height - 2
 
 	; Store kernel
 	mov rbx, kernel_array
@@ -109,35 +120,39 @@ BlurX proc
 	movdqu xmm5, xmmword ptr [rbx]
 
 	while_loop: ; i < end
-		cmp ecx, r8d
+		cmp rcx, r8
 		jge return
 
 		; y = i / stride
 		; x = i % stride
-		mov eax, ecx ; Move loop counter to RAX
-		xor edx, edx
-		div r11d ; Divide by stride
-		mov r10d, eax ; Move the result to R10
-		mov r9d, edx ; Store remainder in R9
+		mov rax, rcx ; Move loop counter to RAX
+		xor rdx, rdx ; Clear RDX
+		div r10 ; Divide by stride
+		mov r9, rax ; Store result (y) in R9
 
-		; if (x >= 6 && x <= byte_width - 6 && y > 2 && y < imageHeight - 2)
-		cmp r9d, 6 ; if (x >= 6)
+		; if (x >= 6 && x <= byte_width - 6 && y > 1 && y < imageHeight - 2)
+		cmp rdx, 6 ; if (x >= 6)
 		jl end_while
-		cmp r9d, r13d ; if (x <= byte_width - 6)
+		cmp rdx, r12 ; if (x <= byte_width - 6)
 		jg end_while
-		cmp r10d, 2 ; if (y > 2)
+		cmp r9, 1 ; if (y > 1)
 		jle end_while
-		cmp r10d, r15d ; if (y < imageHeight - 2)
+		cmp r9, r14 ; if (y < imageHeight - 2)
 		jge return
 
-		pmovzxbd xmm0, [rsi + rcx]
-		cvtdq2ps xmm0, xmm0
-		mulps xmm0, xmm3
+		;---- Calculate ----;
 
-		pmovzxbd xmm1, [rsi + rcx - 6]
-		cvtdq2ps xmm1, xmm1
-		mulps xmm1, xmm4
+		; Center pixel
+		pmovzxbd xmm0, [rsi + rcx] ; Store data
+		cvtdq2ps xmm0, xmm0 ; Convert to floats
+		mulps xmm0, xmm3 ; Multiply with kernel
 
+		; Leftmost pixel
+		pmovzxbd xmm1, [rsi + rcx - 6] ; Store data
+		cvtdq2ps xmm1, xmm1 ; Convert to floats
+		mulps xmm1, xmm4 ; Multiply with kernel
+
+		; Add
 		pmovzxbd xmm2, [rsi + rcx - 3]
 		cvtdq2ps xmm2, xmm2
 		mulps xmm2, xmm5
@@ -157,23 +172,29 @@ BlurX proc
 		addps xmm0, xmm1
 		cvtps2dq xmm0, xmm0
 
-	color1:
+		;--- Extract colors ----;
 		xor rax, rax
+	
+	color1: ; Extract color 1
 		pextrd eax, xmm0, 0
-		cmp eax, 255
+		
+		; Ensure that the color value is in the byte range, saturate otherwise
+		cmp eax, 255 ; Check if high
 		jg high1
-		cmp eax, 0
+		cmp eax, 0 ; Check if low
 		jl low1
-		mov [rdi + rcx], al
+		mov [rdi + rcx], al ; Value OK
 		jmp color2
-	high1:
+	high1: ; Value too high, use 255
 		mov byte ptr [rdi + rcx], 255
 		jmp color2
-	low1:
+	low1: ; Value too high, use 0
 		mov byte ptr [rdi + rcx], 0
 
-	color2:
+	color2: ; Extract color 2 in the same way as color 1
 		pextrd eax, xmm0, 1
+		
+		; Check value
 		cmp eax, 255
 		jg high2
 		cmp eax, 0
@@ -186,8 +207,10 @@ BlurX proc
 	low2:
 		mov byte ptr [rdi + rcx + 1], 0
 
-	color3:
+	color3: ; Extract color 3 as before
 		pextrd eax, xmm0, 2
+		
+		; Check value
 		cmp eax, 255
 		jg high3
 		cmp eax, 0
@@ -205,14 +228,14 @@ BlurX proc
 		; if (i % byte_width == 0)
 		xor rdx, rdx
 		mov rax, rcx
-		div r12d
-		cmp edx, 0
+		div r11 ; i / byte_width
+		
+		cmp edx, 0 ; if (remainder == 0)
 		jne while_loop
-		add ecx, r14d ; i += padding
+		add rcx, r13 ; i += padding
 		jmp while_loop
 
 return:
-	pop r15
 	pop r14
 	pop r13
 	pop r12
@@ -225,178 +248,6 @@ return:
 
 BlurX endp
 
-BlurX_YMM proc
-	push rbx
-	push rsi
-	push rdi
-	push r10
-	push r11
-	push r12
-	push r13
-	push r14
-	push r15
-
-	;---- Arguments ----;
-	; TODO
-	;-------------------;
-
-	;---- Registers ----;
-	; R8 - end index (end)
-	; RSI - data array pointer
-	; RDI - helper array pointer
-
-	; R11 - image stride
-	; R12 - image byte width
-	; R13 - image byte width decreased by 6
-	; R14 - padding
-	; R15 - image height decreased by 2
-
-	; Main loop:
-		; RCX - loop counter (i)
-		; R9 - byte index in the current row (x)
-		; R10 - current row (y)
-
-	; XMM registers:
-		; XMM0 - center pixel data and convolution sum
-		; XMM3 - kernel data for the center pixel
-
-	; YMM registers:
-		; YMM1-YMM2 - image data for the neighbouring pixels
-		; YMM4-YMM5 - kernel data for the neighbouring pixels
-		; YMM6 - permutation mask
-	;-------------------;
-
-	mov r8, rdx ; Store end index
-	mov rsi, data_array ; Store data pointer
-	mov rdi, helper_array ; Store helper pointer
-
-	mov r11, stride ; Store image stride
-	mov r12, byte_width ; Store byte width
-	mov r13, byte_width_6 ; Store byte_width - 6
-	mov r14, padding ; Store padding
-	mov r15, height_2 ; Store height - 2
-
-	; Store kernel
-	mov rbx, kernel_array
-	vmovdqu ymm4, ymmword ptr [rbx]
-	movdqu xmm3, xmmword ptr [rbx + 6 * 4]
-	vmovdqu ymm5, ymmword ptr [rbx + 9 * 4]
-
-	; Store permutation mask
-	vmovdqu	ymm6, ymmword ptr [perm_mask_x]
-
-	while_loop: ; i < end
-		cmp ecx, r8d
-		jge return
-
-		; y = i / stride
-		; x = i % stride
-		mov eax, ecx ; Move loop counter to RAX
-		xor edx, edx
-		div r11d ; Divide by stride
-		mov r10d, eax ; Move the result to R10
-		mov r9d, edx ; Store remainder in R9
-
-		; if (x >= 6 && x <= byte_width - 6 && y > 2 && y < imageHeight - 2)
-		cmp r9d, 6 ; if (x >= 6)
-		jl end_while
-		cmp r9d, r13d ; if (x <= byte_width - 6)
-		jg end_while
-		cmp r10d, 2 ; if (y > 2)
-		jle end_while
-		cmp r10d, r15d ; if (y < imageHeight - 2)
-		jge return
-
-		pmovzxbd xmm0, [rsi + rcx] ; Move center pixel data
-		cvtdq2ps xmm0, xmm0
-		mulps xmm0, xmm3
-		cvtps2dq xmm0, xmm0
-
-		vpmovzxbd ymm1, qword ptr [rsi + rcx - 6] ; Move first 8 bytes containing two pixels to the left
-		vcvtdq2ps ymm1, ymm1
-		vmulps ymm1, ymm1, ymm4
-		
-		vpmovzxbd ymm2, qword ptr [rsi + rcx + 3] ; Move last 8 bytes containing two pixels to the right
-		vcvtdq2ps ymm2, ymm2
-		vmulps ymm2, ymm2, ymm5
-
-		vcvtps2dq ymm1, ymm1
-		vcvtps2dq ymm2, ymm2
-
-		vaddps ymm1, ymm1, ymm2
-		addps xmm0, xmm1
-		vpermd ymm1, ymm6, ymm1
-		addps xmm0, xmm1
-		cvtps2dq xmm0, xmm0
-
-	color1:
-		xor rax, rax
-		pextrd eax, xmm0, 0
-		cmp eax, 255
-		jg high1
-		cmp eax, 0
-		jl low1
-		mov [rdi + rcx], al
-		jmp color2
-	high1:
-		mov byte ptr [rdi + rcx], 255
-		jmp color2
-	low1:
-		mov byte ptr [rdi + rcx], 0
-
-	color2:
-		pextrd eax, xmm0, 1
-		cmp eax, 255
-		jg high2
-		cmp eax, 0
-		jl low2
-		mov [rdi + rcx + 1], al
-		jmp color3
-	high2:
-		mov byte ptr [rdi + rcx + 1], 255
-		jmp color3
-	low2:
-		mov byte ptr [rdi + rcx + 1], 0
-
-	color3:
-		pextrd eax, xmm0, 2
-		cmp eax, 255
-		jg high3
-		cmp eax, 0
-		jl low3
-		mov [rdi + rcx + 2], al
-		jmp end_while
-	high3:
-		mov byte ptr [rdi + rcx + 2], 255
-		jmp end_while
-	low3:
-		mov byte ptr [rdi + rcx + 2], 0
-
-	end_while:
-		add ecx, 3 ; i += 3
-		; if (i % byte_width == 0)
-		xor rdx, rdx
-		mov rax, rcx
-		div r12d
-		cmp edx, 0
-		jne while_loop
-		add ecx, r14d ; i += padding
-		jmp while_loop
-
-return:
-	pop r15
-	pop r14
-	pop r13
-	pop r12
-	pop r11	
-	pop r10
-	pop rdi
-	pop rsi
-	pop rbx
-	ret
-
-BlurX_YMM endp
-
 BlurY proc
 	push rbx
 	push rsi
@@ -406,47 +257,47 @@ BlurY proc
 	push r12
 	push r13
 	push r14
-	push r15
 
 	;---- Arguments ----;
-	; TODO
+	; RCX - start index (int64)
+	; RDX - end index (int64)
 	;-------------------;
 
 	;---- Registers ----;
 	; R8 - end index (end)
-	; RSI - helper array pointer
 	; RDI - data array pointer
+	; RSI - helper array pointer
 
-	; R11 - image stride
-	; R12 - image byte width
-	; R13 - image byte width decreased by 6
-	; R14 - padding
-	; R15 - image height decreased by 2
+	; R10 - image stride
+	; R11 - image byte width
+	; R12 - image byte width decreased by 6
+	; R13 - padding
+	; R14 - image height decreased by 2
 
 	; Main loop:
 		; RCX - loop counter (i)
-		; R9 - byte index in the current row (x)
-		; R10 - current row (y)
+		; RDX - byte index in the current row (x)
+		; R9 - current row (y)
 
 	; XMM registers:
 		; XMM0 - center pixel data and convolution sum
+		; XMM1 - umost or downmost pixel data
+		; XMM2 - data for one pixel up or down of the center
+		
 		; XMM3 - kernel data for the center pixel
-
-	; YMM registers:
-		; YMM1-YMM2 - image data for the neighbouring pixels
-		; YMM4-YMM5 - kernel data for the neighbouring pixels
-		; YMM6 - permutation mask
+		; XMM4 - kernel data for the up and down pixels
+		; XMM5 - kernel data for the upmost and downmost pixels
 	;-------------------;
 
 	mov r8, rdx ; Store end index
 	mov rdi, data_array ; Store data pointer
 	mov rsi, helper_array ; Store helper pointer
 
-	mov r11, stride ; Store image stride
-	mov r12, byte_width ; Store byte width
-	mov r13, byte_width_6 ; Store byte_width - 6
-	mov r14, padding ; Store padding
-	mov r15, height_2 ; Store height - 2
+	mov r10, stride ; Store image stride
+	mov r11, byte_width ; Store byte width
+	mov r12, byte_width_6 ; Store byte_width - 6
+	mov r13, padding ; Store padding
+	mov r14, height_2 ; Store height - 2
 
 	; Store kernel
 	mov rbx, kernel_array
@@ -454,40 +305,43 @@ BlurY proc
 	movdqu xmm4, xmmword ptr [rbx + 3 * 4]
 	movdqu xmm5, xmmword ptr [rbx]
 
+	; Store permutation mask
+	vmovdqu ymm6, ymmword ptr [perm_mask_x]
+
 	while_loop: ; i < end
-		cmp ecx, r8d
+		cmp rcx, r8
 		jge return
 
 		; y = i / stride
 		; x = i % stride
-		mov eax, ecx ; Move loop counter to RAX
-		xor edx, edx
-		div r11d ; Divide by stride
-		mov r10d, eax ; Move the result to R10
-		mov r9d, edx ; Store remainder in R9
+		mov rax, rcx ; Move loop counter to RAX
+		xor rdx, rdx ; Clear RDX
+		div r10 ; Divide by stride
+		mov r9, rax ; Store result (y) in R9
 
-		; if (x >= 6 && x <= byte_width - 6 && y > 2 && y < imageHeight - 2)
-		cmp r9d, 6 ; if (x >= 6)
+		; if (x >= 6 && x <= byte_width - 6 && y > 1 && y < imageHeight - 2)
+		cmp rdx, 6 ; if (x >= 6)
 		jl end_while
-		cmp r9d, r13d ; if (x <= byte_width - 6)
+		cmp rdx, r12 ; if (x <= byte_width - 6)
 		jg end_while
-		cmp r10d, 2 ; if (y > 2)
+		cmp r9, 1 ; if (y > 1)
 		jle end_while
-		cmp r10d, r15d ; if (y < imageHeight - 2)
+		cmp r9, r14 ; if (y < imageHeight - 2)
 		jge return
 
+		;---- Calculate ----;
 		pmovzxbd xmm0, [rsi + rcx]
 		cvtdq2ps xmm0, xmm0
 		mulps xmm0, xmm3
 
 		; Two pixels up
 		mov rax, rcx ; Calculate i - stride
-		sub rax, r11
+		sub rax, r10
 		pmovzxbd xmm1, [rsi + rax]
 		cvtdq2ps xmm1, xmm1
 		mulps xmm1, xmm4
 		
-		sub rax, r11 ; Calculate i - 2 * stride
+		sub rax, r10 ; Calculate i - 2 * stride
 		pmovzxbd xmm2, [rsi + rax]
 		cvtdq2ps xmm2, xmm2
 		mulps xmm2, xmm5
@@ -497,12 +351,12 @@ BlurY proc
 
 		; Two pixels down
 		mov rax, rcx ; Calculate i + stride
-		add rax, r11
+		add rax, r10
 		pmovzxbd xmm1, [rsi + rax]
 		cvtdq2ps xmm1, xmm1
 		mulps xmm1, xmm4
 		
-		add rax, r11 ; Calculate i + 2 * stride
+		add rax, r10 ; Calculate i + 2 * stride
 		pmovzxbd xmm2, [rsi + rax]
 		cvtdq2ps xmm2, xmm2
 		mulps xmm2, xmm5
@@ -511,23 +365,29 @@ BlurY proc
 		addps xmm0, xmm1
 		cvtps2dq xmm0, xmm0
 
-		color1:
+		;--- Extract colors ----;
 		xor rax, rax
+	
+	color1: ; Extract color 1
 		pextrd eax, xmm0, 0
-		cmp eax, 255
+		
+		; Ensure that the color value is in the byte range, saturate otherwise
+		cmp eax, 255 ; Check if high
 		jg high1
-		cmp eax, 0
+		cmp eax, 0 ; Check if low
 		jl low1
-		mov [rdi + rcx], al
+		mov [rdi + rcx], al ; Value OK
 		jmp color2
-	high1:
+	high1: ; Value too high, use 255
 		mov byte ptr [rdi + rcx], 255
 		jmp color2
-	low1:
+	low1: ; Value too high, use 0
 		mov byte ptr [rdi + rcx], 0
 
-	color2:
+	color2: ; Extract color 2 in the same way as color 1
 		pextrd eax, xmm0, 1
+		
+		; Check value
 		cmp eax, 255
 		jg high2
 		cmp eax, 0
@@ -540,8 +400,10 @@ BlurY proc
 	low2:
 		mov byte ptr [rdi + rcx + 1], 0
 
-	color3:
+	color3: ; Extract color 3 as before
 		pextrd eax, xmm0, 2
+		
+		; Check value
 		cmp eax, 255
 		jg high3
 		cmp eax, 0
@@ -559,14 +421,14 @@ BlurY proc
 		; if (i % byte_width == 0)
 		xor rdx, rdx
 		mov rax, rcx
-		div r12d
-		cmp edx, 0
+		div r12 ; i / byte_width
+		
+		cmp edx, 0 ; if (remainder == 0)
 		jne while_loop
-		add ecx, r14d ; i += padding
+		add rcx, r13 ; i += padding
 		jmp while_loop
 
 return:
-	pop r15
 	pop r14
 	pop r13
 	pop r12
@@ -578,5 +440,176 @@ return:
 	ret
 
 BlurY endp
+
+BlurX_YMM proc ; TODO
+	push rbx
+	push rsi
+	push rdi
+	push r10
+	push r11
+	push r12
+	push r13
+	push r14
+
+	;---- Arguments ----;
+	; RCX - start index (int64)
+	; RDX - end index (int64)
+	;-------------------;
+
+	;---- Registers ----;
+	; R8 - end index (end)
+	; RSI - data array pointer
+	; RDI - helper array pointer
+
+	; R10 - image stride
+	; R11 - image byte width
+	; R12 - image byte width decreased by 6
+	; R13 - padding
+	; R14 - image height decreased by 2
+
+	; Main loop:
+		; RCX - loop counter (i)
+		; RDX - byte index in the current row (x)
+		; R9 - current row (y)
+
+	; XMM registers:
+		; XMM0 - center pixel data and convolution sum
+		; 
+	;-------------------;
+
+	mov r8, rdx ; Store end index
+	mov rsi, data_array ; Store data pointer
+	mov rdi, helper_array ; Store helper pointer
+
+	mov r10, stride ; Store image stride
+	mov r11, byte_width ; Store byte width
+	mov r12, byte_width_6 ; Store byte_width - 6
+	mov r13, padding ; Store padding
+	mov r14, height_2 ; Store height - 2
+
+	; Store kernel
+	mov rbx, kernel_array
+	vmovdqu ymm4, ymmword ptr [rbx]
+	movdqu xmm3, xmmword ptr [rbx + 6 * 4]
+	vmovdqu ymm5, ymmword ptr [rbx + 9 * 4]
+
+	; Store permutation mask
+	vmovdqu ymm6, ymmword ptr [perm_mask_x]
+
+	while_loop: ; i < end
+		cmp rcx, r8
+		jge return
+
+		; y = i / stride
+		; x = i % stride
+		mov rax, rcx ; Move loop counter to RAX
+		xor rdx, rdx ; Clear RDX
+		div r10 ; Divide by stride
+		mov r9, rax ; Store result (y) in R9
+
+		; if (x >= 6 && x <= byte_width - 6 && y > 1 && y < imageHeight - 2)
+		cmp rdx, 6 ; if (x >= 6)
+		jl end_while
+		cmp rdx, r12 ; if (x <= byte_width - 6)
+		jg end_while
+		cmp r9, 1 ; if (y > 1)
+		jle end_while
+		cmp r9, r14 ; if (y < imageHeight - 2)
+		jge return
+
+		;---- Calculate ----;
+		pmovzxbd xmm0, [rsi + rcx] ; Move center pixel data
+		cvtdq2ps xmm0, xmm0
+		mulps xmm0, xmm3
+
+		vpmovzxbd ymm1, qword ptr [rsi + rcx - 6] ; Move first 8 bytes containing two pixels to the left
+		vcvtdq2ps ymm1, ymm1
+		vmulps ymm1, ymm1, ymm4
+		
+		vpmovzxbd ymm2, qword ptr [rsi + rcx + 3] ; Move last 8 bytes containing two pixels to the right
+		vcvtdq2ps ymm2, ymm2
+		vmulps ymm2, ymm2, ymm5
+
+		vaddps ymm1, ymm1, ymm2
+		vpermd ymm1, ymm6, ymm2
+		addps xmm1, xmm2
+		addps xmm0, xmm1
+		cvtps2dq xmm0, xmm0
+
+		;--- Extract colors ----;
+		xor rax, rax
+	
+	color1: ; Extract color 1
+		pextrd eax, xmm0, 0
+		
+		; Ensure that the color value is in the byte range, saturate otherwise
+		cmp eax, 255 ; Check if high
+		jg high1
+		cmp eax, 0 ; Check if low
+		jl low1
+		mov [rdi + rcx], al ; Value OK
+		jmp color2
+	high1: ; Value too high, use 255
+		mov byte ptr [rdi + rcx], 255
+		jmp color2
+	low1: ; Value too high, use 0
+		mov byte ptr [rdi + rcx], 0
+
+	color2: ; Extract color 2 in the same way as color 1
+		pextrd eax, xmm0, 1
+		
+		; Check value
+		cmp eax, 255
+		jg high2
+		cmp eax, 0
+		jl low2
+		mov [rdi + rcx + 1], al
+		jmp color3
+	high2:
+		mov byte ptr [rdi + rcx + 1], 255
+		jmp color3
+	low2:
+		mov byte ptr [rdi + rcx + 1], 0
+
+	color3: ; Extract color 3 as before
+		pextrd eax, xmm0, 2
+		
+		; Check value
+		cmp eax, 255
+		jg high3
+		cmp eax, 0
+		jl low3
+		mov [rdi + rcx + 2], al
+		jmp end_while
+	high3:
+		mov byte ptr [rdi + rcx + 2], 255
+		jmp end_while
+	low3:
+		mov byte ptr [rdi + rcx + 2], 0
+
+	end_while:
+		add ecx, 3 ; i += 3
+		; if (i % byte_width == 0)
+		xor rdx, rdx
+		mov rax, rcx
+		div r11 ; i / byte_width
+		
+		cmp edx, 0 ; if (remainder == 0)
+		jne while_loop
+		add rcx, r13 ; i += padding
+		jmp while_loop
+
+return:
+	pop r14
+	pop r13
+	pop r12
+	pop r11	
+	pop r10
+	pop rdi
+	pop rsi
+	pop rbx
+	ret
+
+BlurX_YMM endp
 
 end

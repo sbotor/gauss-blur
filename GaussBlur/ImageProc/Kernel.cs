@@ -54,9 +54,10 @@ namespace GaussBlur.ImageProc
             double variance = SD * SD,
                 constance = 1 / (Math.Sqrt(2.0 * Math.PI) * SD);
 
-            kernel[2] = (float)(constance * Math.Exp(-2 / variance));
-            kernel[1] = (float)(constance * Math.Exp(-0.5 / variance));
-            kernel[0] = (float)constance;
+            // cstn * e^(-(x^2) / (2 * var))
+            kernel[2] = (float)(constance * Math.Exp(-2 / variance)); // cstn * e^(-(2^2) / (2 * var))
+            kernel[1] = (float)(constance * Math.Exp(-0.5 / variance)); // cstn * e^(-(1^2) / (2 * var))
+            kernel[0] = (float)constance; // cstn * e^(-(0^2) / (2 * var))
 
             return kernel;
         }
