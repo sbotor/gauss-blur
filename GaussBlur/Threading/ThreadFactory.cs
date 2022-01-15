@@ -5,7 +5,7 @@ using GaussBlur.ImageProc;
 
 namespace GaussBlur.Threading
 {
-    unsafe abstract class BlurThreadFactory
+    unsafe abstract class ThreadFactory
     {
         public BlurTask Task { get; set; }
         public byte* HelperP { get; set; }
@@ -14,16 +14,16 @@ namespace GaussBlur.Threading
 
         public Kernel ImageKernel { get; set; }
 
-        public Kernel.Type UsedKernel { get; protected set; }
+        public Kernel.Type KernelType { get; protected set; }
 
-        public BlurThreadFactory(double kernelSD)
+        public ThreadFactory(double kernelSD)
         {
             Task = null;
             HelperP = null;
             KernelSD = kernelSD;
 
             ImageKernel = new Kernel(kernelSD);
-            UsedKernel = Kernel.Type.None;
+            KernelType = Kernel.Type.None;
         }
 
         public abstract BlurThread Create(int start, int end);

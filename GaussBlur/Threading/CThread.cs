@@ -20,45 +20,32 @@ namespace GaussBlur.Threading
             helper = helperP;
             kernel = kernelP;
             
-            CurrentThread = new Thread(Run);
+            BoundThread = new Thread(run);
         }
 
-        protected override void Run()
+        protected override void runX()
         {
-            for (int i = 0; i < Task.TotalRepeats; i++)
-            {
-                ImageData imageData = Task.Data;
-
-                CLib.BlurX(
-                    imageData.Data,
+            CLib.BlurX(
+                    Task.Data.Data,
                     helper,
                     StartPos,
                     EndPos,
-                    imageData.Stride,
-                    imageData.Height,
+                    Task.Data.Stride,
+                    Task.Data.Height,
                     kernel);
+        }
 
-                if (CheckIfCanceled())
-                {
-                    return;
-                }
-                SignalAndWait();
-
-                CLib.BlurY(
+        protected override void runY()
+        {
+            CLib.BlurY(
                     helper,
-                    imageData.Data,
+                    Task.Data.Data,
                     StartPos,
                     EndPos,
-                    imageData.Stride,
-                    imageData.Height,
+                    Task.Data.Stride,
+                    Task.Data.Height,
                     kernel);
 
-                if (CheckIfCanceled())
-                {
-                    return;
-                }
-                SignalAndWait();
-            }
         }
     }
 }

@@ -16,6 +16,9 @@ namespace GaussBlur.Libraries
         public static extern void BlurX(long start, long end);
 
         [DllImport(dllDir)]
+        public static extern void BlurX_YMM(long start, long end);
+
+        [DllImport(dllDir)]
         public static extern void BlurY(long start, long end);
     }
 }

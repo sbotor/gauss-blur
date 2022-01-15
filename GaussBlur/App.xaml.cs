@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Data;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows;
 
@@ -16,14 +17,19 @@ namespace GaussBlur
     /// </summary>
     public partial class App : Application
     {
+        [DllImport("Kernel32")]
+        public static extern void AllocConsole();
+
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             string[] args = e.Args;
-            int testIndex = Array.IndexOf(args, "--test");
+            int testIndex = Array.IndexOf(args, "test");
             if (testIndex != -1)
             {
                 try
                 {
+                    AllocConsole();
+
                     TestParser parser = new TestParser(args, testIndex);
                     if (!parser.Parse())
                     {

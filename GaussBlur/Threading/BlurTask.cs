@@ -43,7 +43,7 @@ namespace GaussBlur.Threading
 
             foreach (BlurThread thread in Threads)
             {
-                if (thread.CurrentThread.IsAlive)
+                if (thread.BoundThread.IsAlive)
                 {
                     thread.Join();
                 }
@@ -68,7 +68,7 @@ namespace GaussBlur.Threading
             base.SignalAndWait();
         }
 
-        public void RunWorker(BlurThreadFactory factory, GUI.ProgressWindow progWindow)
+        public void RunWorker(ThreadFactory factory, GUI.ProgressWindow progWindow)
         {
             if (Worker != null)
             {
@@ -83,7 +83,7 @@ namespace GaussBlur.Threading
             Worker.DoWork += new DoWorkEventHandler(
                 delegate (object o, DoWorkEventArgs args)
                 {
-                    Run(args.Argument as BlurThreadFactory);
+                    Run(args.Argument as ThreadFactory);
                 });
 
             Worker.ProgressChanged += new ProgressChangedEventHandler(
@@ -102,11 +102,11 @@ namespace GaussBlur.Threading
             Worker.RunWorkerAsync(factory);
         }
         
-        public void Run(BlurThreadFactory factory)
+        public void Run(ThreadFactory factory)
         {
             unsafe
             {
-                switch (factory.UsedKernel)
+                switch (factory.KernelType)
                 {
                     case Kernel.Type.Float:
                         {
@@ -151,7 +151,7 @@ namespace GaussBlur.Threading
             }
         }
 
-        private unsafe void runWithKernel(BlurThreadFactory factory, void* kernelP)
+        private unsafe void runWithKernel(ThreadFactory factory, void* kernelP)
         {
             Clear();
             int[] slices = Data.Slice(ThreadCount);

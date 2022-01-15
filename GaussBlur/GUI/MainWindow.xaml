@@ -187,14 +187,12 @@
                         <WrapPanel Orientation="Horizontal">
                             <Label Content="Library to use:"
                            Style="{StaticResource LabelStyle}"/>
-                            <RadioButton x:Name="useCRadio"
-                                 Content="C Library"
-                                 GroupName="libRadioButtons"
-                                 Style="{StaticResource RadioButtonStyle}"/>
-                            <RadioButton x:Name="useAsmRadio"
-                                 Content="Asm Library"
-                                 GroupName="libRadioButtons"
-                                 Style="{StaticResource RadioButtonStyle}"/>
+                            
+                            <ComboBox x:Name="libraryBox" Margin="0 10 10 10">
+                                <ComboBoxItem Content="C" IsSelected="True"></ComboBoxItem>
+                                <ComboBoxItem Content="Assembly"></ComboBoxItem>
+                                <ComboBoxItem Content="Assembly with YMM"></ComboBoxItem>
+                            </ComboBox>
 
                         </WrapPanel>
                     </Border>

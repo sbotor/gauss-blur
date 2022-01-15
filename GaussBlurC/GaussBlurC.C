@@ -18,14 +18,6 @@ void normalizeColors(float* c) {
 		c[2] = 0;
 }
 
-void addX(float* colors, int index, int pixel_off, BYTE* src, float* kernel) {
-	int off = abs(pixel_off);
-
-	colors[0] += src[index + 3 * pixel_off] * kernel[off];
-	colors[1] += src[index + 3 * pixel_off + 1] * kernel[off];
-	colors[2] += src[index + 3 * pixel_off + 2] * kernel[off];
-}
-
 #define ADD_COLOR_X(n, offset, kern_pos) colors[n] += src[i + 3 * offset + n] * kernel[kern_pos]
 void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, float* kernel) {
 	const int padding = (imageStride % 4),
@@ -38,17 +30,29 @@ void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 		int x = i % imageStride;
 		int y = i / imageStride;
 
-		if (x >= 6 && x <= byte_width - 6 && y > 2 && y < imageHeight - 2) {
+		if (x >= 6 && x <= byte_width - 6 && y > 1 && y < imageHeight - 2) {
 			// Two pixels to the left
-			addX(colors, i, -2, src, kernel);
-			addX(colors, i, -1, src, kernel);
-			
+			ADD_COLOR_X(0, -2, 2);
+			ADD_COLOR_X(1, -2, 2);
+			ADD_COLOR_X(2, -2, 2);
+
+			ADD_COLOR_X(0, -1, 1);
+			ADD_COLOR_X(1, -1, 1);
+			ADD_COLOR_X(2, -1, 1);
+
 			// The pixel itself
-			addX(colors, i, 0, src, kernel);
+			ADD_COLOR_X(0, 0, 0);
+			ADD_COLOR_X(1, 0, 0);
+			ADD_COLOR_X(2, 0, 0);
 
 			// Two pixels to the right
-			addX(colors, i, 1, src, kernel);
-			addX(colors, i, 2, src, kernel);
+			ADD_COLOR_X(0, 1, 1);
+			ADD_COLOR_X(1, 1, 1);
+			ADD_COLOR_X(2, 1, 1);
+
+			ADD_COLOR_X(0, 2, 2);
+			ADD_COLOR_X(1, 2, 2);
+			ADD_COLOR_X(2, 2, 2);
 
 			normalizeColors(colors);
 
@@ -64,14 +68,6 @@ void BlurX(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 	}
 }
 
-void addY(float* colors, int index, int pixel_off, BYTE* src, float* kernel, int stride) {
-	int off = abs(pixel_off);
-	
-	colors[0] += src[index + stride * pixel_off] * kernel[off];
-	colors[1] += src[index + stride * pixel_off + 1] * kernel[off];
-	colors[2] += src[index + stride * pixel_off + 2] * kernel[off];
-}
-
 #define ADD_COLOR_Y(n, offset, kern_offset) colors[n] += src[i + imageStride * offset + n] * kernel[kern_offset]
 void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int imageHeight, float* kernel) {
 	const int padding = (imageStride % 4),
@@ -84,17 +80,29 @@ void BlurY(BYTE* src, BYTE* dest, int start, int end, int imageStride, int image
 		int x = i % imageStride;
 		int y = i / imageStride;
 
-		if (x >= 6 && x <= byte_width - 6 && y > 2 && y < imageHeight - 2) {
+		if (x >= 6 && x <= byte_width - 6 && y > 1 && y < imageHeight - 2) {
 			// Two pixels up
-			addY(colors, i, -2, src, kernel, imageStride);
-			addY(colors, i, -1, src, kernel, imageStride);
+			ADD_COLOR_Y(0, -2, 2);
+			ADD_COLOR_Y(1, -2, 2);
+			ADD_COLOR_Y(2, -2, 2);
+
+			ADD_COLOR_Y(0, -1, 1);
+			ADD_COLOR_Y(1, -1, 1);
+			ADD_COLOR_Y(2, -1, 1);
 
 			// The pixel itself
-			addY(colors, i, 0, src, kernel, imageStride);
+			ADD_COLOR_Y(0, 0, 0);
+			ADD_COLOR_Y(1, 0, 0);
+			ADD_COLOR_Y(2, 0, 0);
 
 			// Two pixels down
-			addY(colors, i, 1, src, kernel, imageStride);
-			addY(colors, i, 2, src, kernel, imageStride);
+			ADD_COLOR_Y(0, 1, 1);
+			ADD_COLOR_Y(1, 1, 1);
+			ADD_COLOR_Y(2, 1, 1);
+
+			ADD_COLOR_Y(0, 2, 2);
+			ADD_COLOR_Y(1, 2, 2);
+			ADD_COLOR_Y(2, 2, 2);
 
 			normalizeColors(colors);
 

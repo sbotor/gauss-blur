@@ -1,36 +1,29 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using GaussBlur.Libraries;
 
 namespace GaussBlur.Threading
 {
     unsafe class AsmThread : BlurThread
     {
-        public AsmThread(BlurTask task, int start, int end)
+        protected Action<long, long> blurX;
+        protected Action<long, long> blurY;
+
+        public AsmThread(BlurTask task, BaseAsmFactory factory, int start, int end)
             : base(task, start, end)
         {
-            CurrentThread = new Thread(Run);
+            blurX = factory.BlurX;
+            blurY = factory.BlurY;
         }
-        
-        protected override void Run()
+
+        protected override void runX()
         {
-            for (int i = 0; i < Task.TotalRepeats; i++)
-            {
-                AsmLib.BlurX(StartPos, EndPos);
+            blurX.Invoke(StartPos, EndPos);
+        }
 
-                if (CheckIfCanceled())
-                {
-                    return;
-                }
-                SignalAndWait();
-
-                AsmLib.BlurY(StartPos, EndPos);
-
-                if (CheckIfCanceled())
-                {
-                    return;
-                }
-                SignalAndWait();
-            }
+        protected override void runY()
+        {
+            blurY.Invoke(StartPos, EndPos);
         }
     }
 }

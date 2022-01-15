@@ -112,7 +112,7 @@ namespace GaussBlur.ImageProc
             }
         }
 
-        public void LockImage()
+        public bool LockImage()
         {
             if (BoundImage != null)
             {
@@ -120,7 +120,10 @@ namespace GaussBlur.ImageProc
                                 new Rectangle(0, 0, BoundImage.Width, BoundImage.Height),
                                 System.Drawing.Imaging.ImageLockMode.ReadWrite,
                                 BoundImage.PixelFormat);
+                return ImageData != null;
             }
+
+            return false;
         }
         
         public void UnlockImage()
