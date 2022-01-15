@@ -8,41 +8,24 @@ namespace GaussBlur.Threading
     {
         public BaseAsmFactory? Factory { get; protected set; }
 
+        protected Action<long, long> blurX;
+        protected Action<long, long> blurY;
+
         public AsmThread(BlurTask task, BaseAsmFactory factory, int start, int end)
             : base(task, start, end)
         {
-            Factory = factory;
+            blurX = Factory.BlurX;
+            blurY = Factory.BlurY;
         }
-        
-        protected override void Run()
+
+        protected override void runX()
         {
-            Action<long, long>? x = null;
-            Action<long, long>? y = null;
+            Factory?.BlurX?.Invoke(StartPos, EndPos);
+        }
 
-            if (Factory != null)
-            {
-                x = Factory.BlurX;
-                y = Factory.BlurY;
-            }
-
-            for (int i = 0; i < Task.TotalRepeats; i++)
-            {
-                x?.Invoke(StartPos, EndPos);
-
-                if (CheckIfCanceled())
-                {
-                    return;
-                }
-                SignalAndWait();
-
-                y?.Invoke(StartPos, EndPos);
-
-                if (CheckIfCanceled())
-                {
-                    return;
-                }
-                SignalAndWait();
-            }
+        protected override void runY()
+        {
+            Factory?.BlurY?.Invoke(StartPos, EndPos);
         }
     }
 }

@@ -6,23 +6,10 @@ namespace GaussBlur.Threading
 {
     class YMMAsmFactory : XMMAsmFactory
     {
-        public YMMAsmFactory(double kernelSD, bool addDword)
-            : base(kernelSD, addDword)
+        public YMMAsmFactory(double kernelSD) : base(kernelSD)
         {
-            if (AddDword)
-            {
-                BlurX = Libraries.AsmLib.BlurXAddDword_YMM;
-            }
-            else
-            {
-                BlurX = Libraries.AsmLib.BlurX_YMM;
-            }
-
-            KernelType = ImageProc.Kernel.Type.NormalizedFloat;
+            BlurX = Libraries.AsmLib.BlurX_YMM;
             ImageKernel = new ImageProc.AsmKernelLong(kernelSD);
         }
-
-        public YMMAsmFactory(double kernelSD) : this(kernelSD, false)
-        { }
     }
 }

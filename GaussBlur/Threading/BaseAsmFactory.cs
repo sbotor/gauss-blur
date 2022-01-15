@@ -8,16 +8,17 @@ namespace GaussBlur.Threading
 {
     abstract unsafe class BaseAsmFactory : ThreadFactory
     {
-        public int* KernelP { get; private set; }
+        public void* KernelP { get; private set; }
 
-        public Action<long, long>? BlurX { get; protected set; }
+        public Action<long, long> BlurX { get; protected set; }
         
-        public Action<long, long>? BlurY { get; protected set; }
+        public Action<long, long> BlurY { get; protected set; }
 
         public BaseAsmFactory(double kernelSD) : base(kernelSD)
         {
-            BlurX = null;
-            BlurY = null;
+            Action<long, long> pass = (long ignore1, long ignore2) => { };
+            BlurX = pass;
+            BlurY = pass;
         }
 
         public override BlurThread Create(int start, int end)
@@ -29,7 +30,7 @@ namespace GaussBlur.Threading
         {
             base.Init(task, helperP, kernelP);
 
-            KernelP = (int*)kernelP;
+            KernelP = kernelP;
 
             AsmLib.Init(task.Data.Data, helperP, task.Data.Stride,
                 task.Data.Height, kernelP);

@@ -21,10 +21,33 @@ namespace GaussBlur.Threading
             EndPos = end;
             Task = task;
 
-            BoundThread = new Thread(Run);
+            BoundThread = new Thread(run);
         }
 
-        protected abstract void Run();
+        protected abstract void runX();
+        protected abstract void runY();
+
+        protected virtual void run()
+        {
+            for (int i = 0; i < Task.TotalRepeats; i++)
+            {
+                runX();
+
+                if (CheckIfCanceled())
+                {
+                    return;
+                }
+                SignalAndWait();
+
+                runY();
+
+                if (CheckIfCanceled())
+                {
+                    return;
+                }
+                SignalAndWait();
+            }
+        }
 
         public virtual bool CheckIfCanceled()
         {

@@ -5,7 +5,3 @@ EXPORTS BlurX
 EXPORTS BlurY
 
 EXPORTS BlurX_YMM
-EXPORTS BlurXAddDword_YMM
-
-EXPORTS BlurXAddDword
-EXPORTS BlurYAddDword
