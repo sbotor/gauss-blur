@@ -170,7 +170,7 @@ namespace GaussBlur.GUI
                     return new CFactory(stdDev);
 
                 case 1:
-                    return new XMMAsmFactory(stdDev);
+                    return new AsmFactory(stdDev);
 
                 case 2:
                     return new YMMAsmFactory(stdDev);

@@ -110,18 +110,20 @@ namespace GaussBlur.Testing
         {
             List<TestResult> results = new List<TestResult>(TestCount);
 
-            Image.LockImage();
-            foreach (int threads in ThreadCounts)
+            if (Image.LockImage())
             {
-                BlurTask task = new BlurTask(Image.ImageData, threads, RepeatCount);
-
-                for (int i = 0; i < TestCount; i++)
+                foreach (int threads in ThreadCounts)
                 {
-                    task.Clear();
-                    task.Run(factory);
+                    BlurTask task = new BlurTask(Image.ImageData, threads, RepeatCount);
 
-                    TimeSpan time = task.RuntimeStopwatch.Elapsed;
-                    results.Add(new TestResult(time, type, this, threads));
+                    for (int i = 0; i < TestCount; i++)
+                    {
+                        task.Clear();
+                        task.Run(factory);
+
+                        TimeSpan time = task.RuntimeStopwatch.Elapsed;
+                        results.Add(new TestResult(time, type, this, threads));
+                    }
                 }
             }
             Image.UnlockImage();

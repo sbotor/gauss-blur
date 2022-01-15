@@ -2,14 +2,17 @@
 using System.Collections.Generic;
 using System.Text;
 
-using GaussBlur.Libraries;
-
 namespace GaussBlur.Threading
 {
-    unsafe class AsmFactory : XMMAsmFactory
+    class AsmFactory : BaseAsmFactory
     {
         public AsmFactory(double kernelSD) : base(kernelSD)
         {
+            BlurX = Libraries.AsmLib.BlurX;
+            BlurY = Libraries.AsmLib.BlurY;
+
+            KernelType = ImageProc.Kernel.Type.NormalizedFloat;
+            ImageKernel = new ImageProc.AsmKernel(KernelSD);
         }
     }
 }

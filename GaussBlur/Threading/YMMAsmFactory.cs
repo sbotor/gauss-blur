@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GaussBlur.Threading
 {
-    class YMMAsmFactory : XMMAsmFactory
+    class YMMAsmFactory : AsmFactory
     {
         public YMMAsmFactory(double kernelSD) : base(kernelSD)
         {

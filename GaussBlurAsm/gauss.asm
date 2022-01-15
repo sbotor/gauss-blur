@@ -150,12 +150,12 @@ BlurX proc
 		; Leftmost pixel
 		pmovzxbd xmm1, [rsi + rcx - 6] ; Store data
 		cvtdq2ps xmm1, xmm1 ; Convert to floats
-		mulps xmm1, xmm4 ; Multiply with kernel
+		mulps xmm1, xmm5 ; Multiply with kernel
 
 		; Add
 		pmovzxbd xmm2, [rsi + rcx - 3]
 		cvtdq2ps xmm2, xmm2
-		mulps xmm2, xmm5
+		mulps xmm2, xmm4
 
 		addps xmm1, xmm2
 		addps xmm0, xmm1
@@ -451,32 +451,6 @@ BlurX_YMM proc ; TODO
 	push r13
 	push r14
 
-	;---- Arguments ----;
-	; RCX - start index (int64)
-	; RDX - end index (int64)
-	;-------------------;
-
-	;---- Registers ----;
-	; R8 - end index (end)
-	; RSI - data array pointer
-	; RDI - helper array pointer
-
-	; R10 - image stride
-	; R11 - image byte width
-	; R12 - image byte width decreased by 6
-	; R13 - padding
-	; R14 - image height decreased by 2
-
-	; Main loop:
-		; RCX - loop counter (i)
-		; RDX - byte index in the current row (x)
-		; R9 - current row (y)
-
-	; XMM registers:
-		; XMM0 - center pixel data and convolution sum
-		; 
-	;-------------------;
-
 	mov r8, rdx ; Store end index
 	mov rsi, data_array ; Store data pointer
 	mov rdi, helper_array ; Store helper pointer
@@ -531,8 +505,8 @@ BlurX_YMM proc ; TODO
 		vmulps ymm2, ymm2, ymm5
 
 		vaddps ymm1, ymm1, ymm2
-		vpermd ymm1, ymm6, ymm2
-		addps xmm1, xmm2
+		addps xmm0, xmm1
+		vpermd ymm1, ymm6, ymm1
 		addps xmm0, xmm1
 		cvtps2dq xmm0, xmm0
 
