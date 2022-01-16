@@ -1,3 +1,7 @@
+# Ignore testing folders
+images/
+tests/
+
 # Ignore images
 *.jpg
 *.png

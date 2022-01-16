@@ -21,9 +21,9 @@ namespace GaussBlur.GUI
         private int threadCount = 1;
         private int repeatCount = 1;
 
-        private const string inpFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\aei.jpg";
+        //private const string inpFileDir;
 
-        private const string outFileDir = @"C:\Users\sotor\OneDrive - Politechnika Śląska\Studia\JA\gauss-blur\blurred.png";
+       //private const string outFileDir;
         
         private static Regex numRegex = new Regex(@"[0-9.]+");
 
@@ -32,9 +32,9 @@ namespace GaussBlur.GUI
         public MainWindow()
         {
             InitializeComponent();
-            
-            inpFilenameBox.Text = inpFileDir;
-            outFilenameBox.Text = outFileDir;
+
+            inpFilenameBox.Text = @"";
+            outFilenameBox.Text = Path.Join(Directory.GetCurrentDirectory(), "blurred.jpg");
 
             inputImage = new ImageContainer();
 

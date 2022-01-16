@@ -83,9 +83,5 @@ namespace GaussBlur
 
             new GUI.MainWindow().Show();
         }
-
-        
-
-        
     }
 }

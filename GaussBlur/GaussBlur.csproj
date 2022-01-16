@@ -10,23 +10,18 @@
     <StartupObject />
     <Authors>Szymon Botor</Authors>
     <Company>Politechnika Śląska</Company>
+	  <UseCommonOutputDirectory>true</UseCommonOutputDirectory>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <OutputPath></OutputPath>
+    <OutputPath>..\bin\Debug\</OutputPath>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <OutputPath>..\bin\Release\</OutputPath>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Compile Remove="Properties\**" />
-    <EmbeddedResource Remove="Properties\**" />
-    <None Remove="Properties\**" />
-    <Page Remove="Properties\**" />
-  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />

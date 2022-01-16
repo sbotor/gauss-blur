@@ -7,18 +7,18 @@ namespace GaussBlur.Libraries
 {
     class AsmLib
     {
-        private const string dllDir = @"..\GaussBlurAsm.dll";
+        public const string Directory = @"GaussBlurAsm.dll";
 
-        [DllImport(dllDir)]
+        [DllImport(Directory)]
         public static extern unsafe void Init(byte* data, byte* helper, long stride, long height, void* kernel);
 
-        [DllImport(dllDir)]
+        [DllImport(Directory)]
         public static extern void BlurX(long start, long end);
 
-        [DllImport(dllDir)]
+        [DllImport(Directory)]
         public static extern void BlurX_YMM(long start, long end);
 
-        [DllImport(dllDir)]
+        [DllImport(Directory)]
         public static extern void BlurY(long start, long end);
     }
 }
