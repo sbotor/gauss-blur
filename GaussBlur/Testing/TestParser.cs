@@ -46,7 +46,7 @@ namespace GaussBlur.Testing
                 builder.AppendLine("[<library>]");
                 builder.AppendLine("[-t | --threads <threadCount>]");
                 builder.AppendLine("[-c | --count <testCount>]");
-                builder.AppendLine("[-r | --repeat <repeatCount>]");
+                builder.AppendLine("[-r | --repeats <repeatCount>]");
 
                 builder.AppendLine("\nLibrary options: -[A]ssembly | -[C] | -[B]oth (defalut)");
                 builder.AppendLine("Thread count options (numbers from 1 to 64): <number> | <start-end> (both inclusive) | <num1,num2,...>");

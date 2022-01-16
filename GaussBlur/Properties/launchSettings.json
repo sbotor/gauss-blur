@@ -2,7 +2,7 @@
   "profiles": {
     "GaussBlur": {
       "commandName": "Project",
-      "commandLineArgs": "test",
+      "commandLineArgs": "test \"images\\airport.jpg\" -o \"tests\\\" --threads 1,2,4,6,8,12,16,24,32,64 --repeats 4 --count 1 -A",
       "nativeDebugging": true
     }
   }
