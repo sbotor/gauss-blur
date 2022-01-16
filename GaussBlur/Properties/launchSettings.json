@@ -2,7 +2,7 @@
   "profiles": {
     "GaussBlur": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\sotor\\OneDrive - Politechnika Śląska\\Studia\\JA\\gauss-blur\\images\\airport.jpg\" -o \"C:\\Users\\sotor\\OneDrive - Politechnika Śląska\\Studia\\JA\\gauss-blur\\tests\" --threads [1,2,4,8,16,20,24,32,64] --repeats 4 --count 10 -A",
+      "commandLineArgs": "test",
       "nativeDebugging": true
     }
   }

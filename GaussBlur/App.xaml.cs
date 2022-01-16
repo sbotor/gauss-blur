@@ -23,6 +23,21 @@ namespace GaussBlur
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             string[] args = e.Args;
+
+            if (Array.IndexOf(args, "help") != -1)
+            {
+                try
+                {
+                    AllocConsole();
+                    Console.WriteLine(TestParser.HelpMessage);
+                    return;
+                }
+                catch (Exception exc)
+                {
+                    Console.WriteLine($"Exception occurred during testing: \"{exc.Message}\".");
+                }
+            }
+
             int testIndex = Array.IndexOf(args, "test");
             if (testIndex != -1)
             {
@@ -33,7 +48,7 @@ namespace GaussBlur
                     TestParser parser = new TestParser(args, testIndex);
                     if (!parser.Parse())
                     {
-                        Console.WriteLine($"ERROR: Invalid parameters.\n{parser.Message}");
+                        Console.WriteLine($"ERROR: Invalid parameters.\n{parser.Message}\n\nUse 'help' to get available arguments.");
                         return;
                     }
 
