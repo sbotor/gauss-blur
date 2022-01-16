@@ -30,9 +30,30 @@ namespace GaussBlur.Testing
 
         public string Message { get; private set; }
 
-        private static Regex threadListRegex = new Regex(@"^\[\s*(\d\d?\s*(?:,\s*\d\d?\s*)*)\]$");
+        private static Regex threadListRegex = new Regex(@"^(\d\d?(?:\s*,\s*\d\d?)*)$");
 
-        private static Regex threadRangeRegex = new Regex(@"^\[\s*(\d\d?)\s*-\s*(\d\d?)\s*\]$");
+        private static Regex threadRangeRegex = new Regex(@"^(\d\d?)\s*-\s*(\d\d?)$");
+
+        public static string HelpMessage
+        {
+            get
+            {
+                StringBuilder builder = new StringBuilder();
+
+                builder.AppendLine("Usage:");
+                builder.AppendLine("test <inputFile> [<testArgs>]\n\nTest arguments:");
+                builder.AppendLine("[-o | --out <outputFile>]");
+                builder.AppendLine("[<library>]");
+                builder.AppendLine("[-t | --threads <threadCount>]");
+                builder.AppendLine("[-c | --count <testCount>]");
+                builder.AppendLine("[-r | --repeat <repeatCount>]");
+
+                builder.AppendLine("\nLibrary options: -[A]ssembly | -[C] | -[B]oth (defalut)");
+                builder.AppendLine("Thread count options (numbers from 1 to 64): <number> | <start-end> (both inclusive) | <num1,num2,...>");
+
+                return builder.ToString();
+            }
+        }
 
         public TestParser(string[] args, int start)
         {
@@ -78,7 +99,6 @@ namespace GaussBlur.Testing
         private bool parseArg()
         {
             string arg = Args[i];
-            int n;
             
             switch (arg)
             {
@@ -262,8 +282,10 @@ namespace GaussBlur.Testing
                 InpDir = Args[Start + 1];
                 if (File.Exists(InpDir))
                 {
+                    Valid = true;
+                    
                     for (i = Start + 2; i < Args.Length; i++)
-                    {
+                    {   
                         Valid = parseArg();
 
                         if (!Valid)
