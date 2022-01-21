@@ -80,7 +80,7 @@ namespace GaussBlur.GUI
             }
 
 
-            if (!double.TryParse(stdDevBox.Text, out stdDev) && stdDev > 0)
+            if (!double.TryParse(stdDevBox.Text, out stdDev) && stdDev > 0.0 && stdDev <= 5000.0)
             {
                 MessageBox.Show("Invalid standard deviation.");
                 return false;

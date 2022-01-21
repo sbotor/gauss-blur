@@ -71,6 +71,13 @@ namespace GaussBlur
                         Console.WriteLine("Done.\n");
                     }
 
+                    if (parser.TestYMM)
+                    {
+                        Console.WriteLine("--- Testing YMM...");
+                        test.TestYMM();
+                        Console.WriteLine("Done.\n");
+                    }
+
                     string outDir = parser.OutDir;
                     if (outDir == "")
                     {

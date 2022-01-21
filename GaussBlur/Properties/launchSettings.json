@@ -2,7 +2,7 @@
   "profiles": {
     "GaussBlur": {
       "commandName": "Project",
-      "commandLineArgs": "test \"images\\airport.jpg\" -o \"tests\\\" --threads 1,2,4,6,8,12,16,24,32,64 --repeats 4 --count 1 -A",
+      "commandLineArgs": "test \"C:\\Users\\sotor\\OneDrive\\Documents\\repos\\gauss-blur\\images\\airport.jpg\" -o \"C:\\Users\\sotor\\OneDrive\\Documents\\repos\\gauss-blur\\tests\" --threads 1,2,4,6,8,12,16,24,32,64 --repeats 4 --count 10 -A -C -Y",
       "nativeDebugging": true
     }
   }

@@ -507,8 +507,8 @@ BlurX_YMM proc ; TODO
 
 		;---- Calculate ----;
 		pmovzxbd xmm0, [rsi + rcx] ; Move center pixel data
-		cvtdq2ps xmm0, xmm0
-		mulps xmm0, xmm3
+		cvtdq2ps xmm0, xmm0 ; Convert to floats
+		mulps xmm0, xmm3 ; Multiply by the kernel values
 
 		vpmovzxbd ymm1, qword ptr [rsi + rcx - 6] ; Move first 8 bytes containing two pixels to the left
 		vcvtdq2ps ymm1, ymm1
@@ -518,11 +518,11 @@ BlurX_YMM proc ; TODO
 		vcvtdq2ps ymm2, ymm2
 		vmulps ymm2, ymm2, ymm5
 
-		vaddps ymm1, ymm1, ymm2
-		addps xmm0, xmm1
-		vpermd ymm1, ymm6, ymm1
-		addps xmm0, xmm1
-		cvtps2dq xmm0, xmm0
+		vaddps ymm1, ymm1, ymm2 ; Add values from YMM registers
+		addps xmm0, xmm1 ; Add lower 4 values from YMM to the XMM
+		vpermd ymm1, ymm6, ymm1 ; Permute: place values 3, 4, 5 in places 0, 1, 2
+		addps xmm0, xmm1 ; Add the permuted values
+		cvtps2dq xmm0, xmm0 ; Convert back to dwords
 
 		;--- Extract colors ----;
 		xor rax, rax

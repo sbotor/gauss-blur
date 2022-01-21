@@ -15,6 +15,8 @@ namespace GaussBlur.Testing
         public TimeSpan Time { get; set; }
 
         public string Type { get; set; }
+
+        public ImageTest ParentTest { get; private set; }
         
         public TestResult(TimeSpan time, string type)
         {
@@ -26,6 +28,7 @@ namespace GaussBlur.Testing
         public TestResult(TimeSpan time, string type, ImageTest test, int threadCount) : this(time, type)
         {
             ThreadCount = threadCount;
+            ParentTest = test;
             ImageWidth = test.ImageWidth;
             ImageHeight = test.ImageHeight;
         }

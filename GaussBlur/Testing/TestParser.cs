@@ -18,6 +18,8 @@ namespace GaussBlur.Testing
 
         public bool TestAsm { get; private set; }
 
+        public bool TestYMM { get; private set; }
+
         public string InpDir { get; private set; }
 
         public string OutDir { get; private set; }
@@ -48,7 +50,7 @@ namespace GaussBlur.Testing
                 builder.AppendLine("[-c | --count <testCount>]");
                 builder.AppendLine("[-r | --repeats <repeatCount>]");
 
-                builder.AppendLine("\nLibrary options: -[A]ssembly | -[C] | -[B]oth (defalut)");
+                builder.AppendLine("\nLibrary options (one or more, defaults to '-A -C'): -[A]ssembly | -[C] | -[Y]MM");
                 builder.AppendLine("Thread count options (numbers from 1 to 64): <number> | <start-end> (both inclusive) | <num1,num2,...>");
 
                 return builder.ToString();
@@ -84,6 +86,7 @@ namespace GaussBlur.Testing
 
             TestC = false;
             TestAsm = false;
+            TestYMM = false;
 
             InpDir = "";
             OutDir = "";
@@ -120,9 +123,8 @@ namespace GaussBlur.Testing
                     TestC = true;
                     break;
 
-                case "-B":
-                    TestAsm = true;
-                    TestC = true;
+                case "-Y":
+                    TestYMM = true;
                     break;
 
                 case "-t":
@@ -315,7 +317,7 @@ namespace GaussBlur.Testing
 
         private void checkAndSetDefaults()
         {
-            if (!TestC && !TestAsm)
+            if (!TestC && !TestAsm && !TestYMM)
             {
                 TestC = true;
                 TestAsm = true;

@@ -41,6 +41,10 @@ namespace GaussBlur.Testing
                 {
                     prefix += "Asm_";
                 }
+                if (testedYMM)
+                {
+                    prefix += "YMM_";
+                }
 
                 string now = DateTime.Now.ToString("yyyy-MM-dd_HH-mm-ss");
                 return $"{prefix}X{TestCount}_R{RepeatCount}_{ImageWidth}x{ImageHeight}_{now}.csv";
@@ -50,6 +54,8 @@ namespace GaussBlur.Testing
         private bool testedC;
 
         private bool testedAsm;
+
+        private bool testedYMM;
 
         public ImageTest(string filename, int testCount, int[] threadCounts, int repeatCount)
         {
@@ -98,12 +104,19 @@ namespace GaussBlur.Testing
             return test(new AsmFactory(KernelSD), "Asm");
         }
 
+        public List<TestResult> TestYMM()
+        {
+            testedYMM = true;
+            return test(new YMMAsmFactory(KernelSD), "YMM");
+        }
+        
         public void Clear()
         {
             Results = new List<TestResult>(TestCount);
 
             testedC = false;
             testedAsm = false;
+            testedYMM = false;
         }
 
         public List<TestResult> test(ThreadFactory factory, string type)
